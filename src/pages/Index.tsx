@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertTriangle, FileText, DollarSign, Clock, Users, CheckCircle, Plus, LogOut } from "lucide-react";
+import { AlertTriangle, FileText, DollarSign, Clock, Users, CheckCircle, Plus, LogOut, Shield } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import DashboardStats from "@/components/DashboardStats";
 import ContractList from "@/components/ContractList";
@@ -15,7 +15,7 @@ import Logo from "@/components/Logo";
 
 const Index = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const { user, signOut, loading } = useAuth();
+  const { user, signOut, loading, isAdmin, userRole } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -59,9 +59,16 @@ const Index = () => {
               </Button>
               <div className="flex items-center space-x-2">
                 <div className="h-8 w-8 bg-gradient-to-br from-orange-500 to-red-600 rounded-full flex items-center justify-center shadow-lg">
-                  <Users className="h-4 w-4 text-white" />
+                  {isAdmin ? <Shield className="h-4 w-4 text-white" /> : <Users className="h-4 w-4 text-white" />}
                 </div>
-                <span className="text-sm font-medium text-slate-200">{user.email}</span>
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium text-slate-200">{user.email}</span>
+                  {isAdmin && (
+                    <Badge variant="secondary" className="text-xs bg-orange-600/20 text-orange-300 border-orange-600/30">
+                      ADMIN
+                    </Badge>
+                  )}
+                </div>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -75,6 +82,20 @@ const Index = () => {
           </div>
         </div>
       </header>
+
+      {/* Admin Banner */}
+      {isAdmin && (
+        <div className="bg-gradient-to-r from-orange-600/20 to-red-600/20 border-b border-orange-600/30">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
+            <div className="flex items-center justify-center space-x-2">
+              <Shield className="h-4 w-4 text-orange-300" />
+              <span className="text-sm font-medium text-orange-300">
+                MODE ADMINISTRATEUR ACTIVÉ - Accès complet aux données
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -134,6 +155,9 @@ const Index = () => {
                 <div className="text-center py-12">
                   <CheckCircle className="h-12 w-12 text-slate-500 mx-auto mb-4" />
                   <p className="text-slate-400 font-medium">MODULE EN COURS DE DÉVELOPPEMENT</p>
+                  {isAdmin && (
+                    <p className="text-orange-300 text-sm mt-2">Mode admin : Configuration avancée disponible</p>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -151,6 +175,9 @@ const Index = () => {
                 <div className="text-center py-12">
                   <DollarSign className="h-12 w-12 text-slate-500 mx-auto mb-4" />
                   <p className="text-slate-400 font-medium">MODULE EN COURS DE DÉVELOPPEMENT</p>
+                  {isAdmin && (
+                    <p className="text-orange-300 text-sm mt-2">Mode admin : Rapports détaillés et export de données</p>
+                  )}
                 </div>
               </CardContent>
             </Card>

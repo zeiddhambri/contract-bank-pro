@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -7,11 +6,13 @@ import { useToast } from '@/hooks/use-toast';
 interface AuthContextType {
   user: User | null;
   session: Session | null;
+  userRole: string | null;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: any }>;
   loading: boolean;
+  isAdmin: boolean;
 }
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
@@ -27,8 +28,13 @@ export const useAuth = () => {
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+
+  // For demo purposes, we'll check if the email contains "admin" to grant admin privileges
+  // In a real app, this would come from a database
+  const isAdmin = userRole === 'admin' || (user?.email && user.email.includes('admin'));
 
   useEffect(() => {
     // Set up auth state listener
@@ -36,6 +42,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
+        
+        // Set role based on email for demo purposes
+        if (session?.user?.email) {
+          if (session.user.email.includes('admin')) {
+            setUserRole('admin');
+          } else {
+            setUserRole('user');
+          }
+        } else {
+          setUserRole(null);
+        }
+        
         setLoading(false);
       }
     );
@@ -44,6 +62,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
+      
+      if (session?.user?.email) {
+        if (session.user.email.includes('admin')) {
+          setUserRole('admin');
+        } else {
+          setUserRole('user');
+        }
+      }
+      
       setLoading(false);
     });
 
@@ -65,7 +92,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } else {
       toast({
         title: "Connexion réussie",
-        description: "Vous êtes maintenant connecté",
+        description: isAdmin ? "Bienvenue Administrateur !" : "Vous êtes maintenant connecté",
       });
     }
 
@@ -102,6 +129,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
     if (!error) {
+      setUserRole(null);
       toast({
         title: "Déconnexion réussie",
         description: "À bientôt !",
@@ -135,11 +163,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const value = {
     user,
     session,
+    userRole,
     signIn,
     signUp,
     signOut,
     resetPassword,
     loading,
+    isAdmin,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
