@@ -32,9 +32,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  // For demo purposes, we'll check if the email contains "admin" to grant admin privileges
-  // In a real app, this would come from a database
-  const isAdmin = userRole === 'admin' || (user?.email && user.email.includes('admin'));
+  // Check if the current user is the admin
+  const isAdmin = user?.email === 'zeid.dhambri@gmail.com';
 
   useEffect(() => {
     // Set up auth state listener
@@ -43,13 +42,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSession(session);
         setUser(session?.user ?? null);
         
-        // Set role based on email for demo purposes
-        if (session?.user?.email) {
-          if (session.user.email.includes('admin')) {
-            setUserRole('admin');
-          } else {
-            setUserRole('user');
-          }
+        // Set role based on the specific admin email
+        if (session?.user?.email === 'zeid.dhambri@gmail.com') {
+          setUserRole('admin');
+        } else if (session?.user?.email) {
+          setUserRole('user');
         } else {
           setUserRole(null);
         }
@@ -63,12 +60,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setSession(session);
       setUser(session?.user ?? null);
       
-      if (session?.user?.email) {
-        if (session.user.email.includes('admin')) {
-          setUserRole('admin');
-        } else {
-          setUserRole('user');
-        }
+      if (session?.user?.email === 'zeid.dhambri@gmail.com') {
+        setUserRole('admin');
+      } else if (session?.user?.email) {
+        setUserRole('user');
       }
       
       setLoading(false);
@@ -90,9 +85,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         variant: "destructive",
       });
     } else {
+      const isAdminUser = email === 'zeid.dhambri@gmail.com';
       toast({
         title: "Connexion réussie",
-        description: isAdmin ? "Bienvenue Administrateur !" : "Vous êtes maintenant connecté",
+        description: isAdminUser ? "Bienvenue Administrateur !" : "Vous êtes maintenant connecté",
       });
     }
 
