@@ -9,6 +9,7 @@ import DashboardStats from "@/components/DashboardStats";
 import ContractList from "@/components/ContractList";
 import AlertsPanel from "@/components/AlertsPanel";
 import CreateContractDialog from "@/components/CreateContractDialog";
+import Logo from "@/components/Logo";
 
 const Index = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -20,11 +21,9 @@ const Index = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
-              <div className="bg-blue-600 p-2 rounded-lg">
-                <FileText className="h-6 w-6 text-white" />
-              </div>
+              <Logo />
               <div>
-                <h1 className="text-xl font-bold text-slate-900">ContratBank Pro</h1>
+                <h1 className="text-xl font-bold text-slate-900">Contract Manager</h1>
                 <p className="text-sm text-slate-600">Gestion des contrats de financement</p>
               </div>
             </div>
