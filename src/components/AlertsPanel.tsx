@@ -61,9 +61,9 @@ const AlertsPanel = () => {
 
   const getPriorityBadge = (priority: string) => {
     const config = {
-      haute: { label: "Haute", color: "bg-red-100 text-red-800" },
-      moyenne: { label: "Moyenne", color: "bg-orange-100 text-orange-800" },
-      basse: { label: "Basse", color: "bg-yellow-100 text-yellow-800" }
+      haute: { label: "Haute", color: "bg-red-600/20 text-red-400 border-red-500/30" },
+      moyenne: { label: "Moyenne", color: "bg-orange-600/20 text-orange-400 border-orange-500/30" },
+      basse: { label: "Basse", color: "bg-yellow-600/20 text-yellow-400 border-yellow-500/30" }
     };
     
     const priorityConfig = config[priority as keyof typeof config] || config.moyenne;
@@ -78,49 +78,49 @@ const AlertsPanel = () => {
     <div className="space-y-6">
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="border-red-200 bg-red-50">
+        <Card className="bg-gradient-to-br from-red-600/20 to-red-800/20 border-red-500/30 backdrop-blur-sm">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-red-600">Alertes Critiques</p>
-                <p className="text-2xl font-bold text-red-900">2</p>
+                <p className="text-sm font-medium text-red-400">Alertes Critiques</p>
+                <p className="text-2xl font-bold text-white">2</p>
               </div>
-              <AlertTriangle className="h-8 w-8 text-red-600" />
+              <AlertTriangle className="h-8 w-8 text-red-400" />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-orange-200 bg-orange-50">
+        <Card className="bg-gradient-to-br from-orange-600/20 to-orange-800/20 border-orange-500/30 backdrop-blur-sm">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-orange-600">En Attente</p>
-                <p className="text-2xl font-bold text-orange-900">6</p>
+                <p className="text-sm font-medium text-orange-400">En Attente</p>
+                <p className="text-2xl font-bold text-white">6</p>
               </div>
-              <Clock className="h-8 w-8 text-orange-600" />
+              <Clock className="h-8 w-8 text-orange-400" />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-blue-200 bg-blue-50">
+        <Card className="bg-gradient-to-br from-blue-600/20 to-blue-800/20 border-blue-500/30 backdrop-blur-sm">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-blue-600">Traitées aujourd'hui</p>
-                <p className="text-2xl font-bold text-blue-900">4</p>
+                <p className="text-sm font-medium text-blue-400">Traitées aujourd'hui</p>
+                <p className="text-2xl font-bold text-white">4</p>
               </div>
-              <FileX className="h-8 w-8 text-blue-600" />
+              <FileX className="h-8 w-8 text-blue-400" />
             </div>
           </CardContent>
         </Card>
       </div>
 
       {/* Alerts List */}
-      <Card>
+      <Card className="bg-black/40 border-slate-700/50 backdrop-blur-sm">
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <AlertTriangle className="h-5 w-5" />
-            <span>Alertes Actives</span>
+          <CardTitle className="flex items-center space-x-2 text-white font-bold tracking-wide">
+            <AlertTriangle className="h-5 w-5 text-orange-400" />
+            <span>ALERTES ACTIVES</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -128,26 +128,30 @@ const AlertsPanel = () => {
             {alerts.map((alert) => (
               <div
                 key={alert.id}
-                className="flex items-start space-x-4 p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+                className="flex items-start space-x-4 p-4 border border-slate-700/50 rounded-lg hover:bg-slate-800/30 transition-colors backdrop-blur-sm"
               >
-                <div className="flex-shrink-0 p-2 bg-slate-100 rounded-full">
+                <div className="flex-shrink-0 p-2 bg-slate-800/50 rounded-full border border-slate-600/30">
                   {getAlertIcon(alert.type)}
                 </div>
                 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <h4 className="font-semibold text-slate-900">{alert.title}</h4>
-                      <p className="text-sm text-slate-600 mt-1">{alert.description}</p>
+                      <h4 className="font-semibold text-white">{alert.title}</h4>
+                      <p className="text-sm text-slate-300 mt-1">{alert.description}</p>
                       <div className="flex items-center space-x-4 mt-2">
-                        <span className="text-sm text-slate-500">Client: {alert.client}</span>
+                        <span className="text-sm text-slate-400">Client: {alert.client}</span>
                         <span className="text-sm text-slate-500">•</span>
-                        <span className="text-sm text-slate-500">Échéance: {alert.delai}</span>
+                        <span className="text-sm text-slate-400">Échéance: {alert.delai}</span>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2 ml-4">
                       {getPriorityBadge(alert.priority)}
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className="border-orange-500/30 text-orange-400 hover:bg-orange-500/20 hover:text-orange-300"
+                      >
                         Traiter
                       </Button>
                     </div>

@@ -10,32 +10,32 @@ const DashboardStats = () => {
       value: "247",
       change: "+12%",
       icon: FileText,
-      color: "text-blue-600",
-      bgColor: "bg-blue-100"
+      color: "text-blue-400",
+      bgGradient: "from-blue-600/20 to-blue-800/20"
     },
     {
       title: "En Attente Signature",
       value: "23",
       change: "+5%",
       icon: Clock,
-      color: "text-orange-600",
-      bgColor: "bg-orange-100"
+      color: "text-orange-400",
+      bgGradient: "from-orange-600/20 to-orange-800/20"
     },
     {
       title: "Alertes Actives",
       value: "8",
       change: "-3%",
       icon: AlertTriangle,
-      color: "text-red-600",
-      bgColor: "bg-red-100"
+      color: "text-red-400",
+      bgGradient: "from-red-600/20 to-red-800/20"
     },
     {
       title: "Validés ce mois",
       value: "156",
       change: "+8%",
       icon: CheckCircle,
-      color: "text-green-600",
-      bgColor: "bg-green-100"
+      color: "text-green-400",
+      bgGradient: "from-green-600/20 to-green-800/20"
     }
   ];
 
@@ -63,17 +63,20 @@ const DashboardStats = () => {
         {stats.map((stat, index) => {
           const IconComponent = stat.icon;
           return (
-            <Card key={index} className="hover:shadow-md transition-shadow duration-200">
+            <Card key={index} className="bg-black/40 border-slate-700/50 backdrop-blur-sm hover:bg-black/50 transition-all duration-300 hover:shadow-lg hover:shadow-orange-500/10">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div className="space-y-2">
-                    <p className="text-sm font-medium text-slate-600">{stat.title}</p>
-                    <p className="text-2xl font-bold text-slate-900">{stat.value}</p>
-                    <Badge variant={stat.change.startsWith('+') ? 'default' : 'destructive'} className="text-xs">
+                    <p className="text-sm font-medium text-slate-400">{stat.title}</p>
+                    <p className="text-2xl font-bold text-white">{stat.value}</p>
+                    <Badge 
+                      variant={stat.change.startsWith('+') ? 'default' : 'destructive'} 
+                      className={`text-xs ${stat.change.startsWith('+') ? 'bg-green-600/20 text-green-400 border-green-500/30' : 'bg-red-600/20 text-red-400 border-red-500/30'}`}
+                    >
                       {stat.change}
                     </Badge>
                   </div>
-                  <div className={`p-3 rounded-full ${stat.bgColor}`}>
+                  <div className={`p-3 rounded-full bg-gradient-to-br ${stat.bgGradient} border border-slate-600/30`}>
                     <IconComponent className={`h-6 w-6 ${stat.color}`} />
                   </div>
                 </div>
@@ -88,19 +91,19 @@ const DashboardStats = () => {
         {financialStats.map((stat, index) => {
           const IconComponent = stat.icon;
           return (
-            <Card key={index} className="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
+            <Card key={index} className="bg-gradient-to-r from-orange-600/20 to-red-600/20 border-orange-500/30 backdrop-blur-sm hover:from-orange-600/30 hover:to-red-600/30 transition-all duration-300">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div className="space-y-2">
-                    <p className="text-blue-100 text-sm">{stat.title}</p>
-                    <p className="text-3xl font-bold">{stat.value}</p>
-                    <p className="text-blue-200 text-sm">{stat.subtitle}</p>
-                    <Badge className="bg-white/20 text-white border-white/30">
+                    <p className="text-orange-200 text-sm font-medium">{stat.title}</p>
+                    <p className="text-3xl font-bold text-white">{stat.value}</p>
+                    <p className="text-orange-300 text-sm">{stat.subtitle}</p>
+                    <Badge className="bg-white/20 text-white border-white/30 font-medium">
                       {stat.trend}
                     </Badge>
                   </div>
-                  <div className="p-3 bg-white/20 rounded-full">
-                    <IconComponent className="h-8 w-8" />
+                  <div className="p-3 bg-white/20 rounded-full border border-white/20">
+                    <IconComponent className="h-8 w-8 text-white" />
                   </div>
                 </div>
               </CardContent>

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { FileText, Plus } from "lucide-react";
+import { FileText } from "lucide-react";
 
 const ContractList = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -58,10 +58,10 @@ const ContractList = () => {
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      en_cours: { label: "En cours", variant: "default" as const, color: "bg-blue-100 text-blue-800" },
-      attente_signature: { label: "Attente signature", variant: "secondary" as const, color: "bg-orange-100 text-orange-800" },
-      valide: { label: "Validé", variant: "default" as const, color: "bg-green-100 text-green-800" },
-      alerte: { label: "Alerte", variant: "destructive" as const, color: "bg-red-100 text-red-800" }
+      en_cours: { label: "En cours", color: "bg-blue-600/20 text-blue-400 border-blue-500/30" },
+      attente_signature: { label: "Attente signature", color: "bg-orange-600/20 text-orange-400 border-orange-500/30" },
+      valide: { label: "Validé", color: "bg-green-600/20 text-green-400 border-green-500/30" },
+      alerte: { label: "Alerte", color: "bg-red-600/20 text-red-400 border-red-500/30" }
     };
     
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.en_cours;
@@ -80,15 +80,15 @@ const ContractList = () => {
   });
 
   return (
-    <Card>
+    <Card className="bg-black/40 border-slate-700/50 backdrop-blur-sm">
       <CardHeader>
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
           <div>
-            <CardTitle className="flex items-center space-x-2">
-              <FileText className="h-5 w-5" />
-              <span>Gestion des Contrats</span>
+            <CardTitle className="flex items-center space-x-2 text-white font-bold tracking-wide">
+              <FileText className="h-5 w-5 text-orange-400" />
+              <span>GESTION DES CONTRATS</span>
             </CardTitle>
-            <p className="text-sm text-slate-600 mt-1">
+            <p className="text-sm text-slate-400 mt-1">
               {filteredContracts.length} contrat(s) trouvé(s)
             </p>
           </div>
@@ -97,13 +97,13 @@ const ContractList = () => {
               placeholder="Rechercher un contrat..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full sm:w-64"
+              className="w-full sm:w-64 bg-black/30 border-slate-600 text-white placeholder:text-slate-400"
             />
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full sm:w-48">
+              <SelectTrigger className="w-full sm:w-48 bg-black/30 border-slate-600 text-white">
                 <SelectValue placeholder="Filtrer par statut" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-slate-800 border-slate-600">
                 <SelectItem value="tous">Tous les statuts</SelectItem>
                 <SelectItem value="en_cours">En cours</SelectItem>
                 <SelectItem value="attente_signature">Attente signature</SelectItem>
@@ -118,31 +118,37 @@ const ContractList = () => {
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead>Référence</TableHead>
-                <TableHead>Client</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Montant</TableHead>
-                <TableHead>Statut</TableHead>
-                <TableHead>Agence</TableHead>
-                <TableHead>Date décision</TableHead>
-                <TableHead>Actions</TableHead>
+              <TableRow className="border-slate-700 hover:bg-slate-800/50">
+                <TableHead className="text-slate-300 font-medium">Référence</TableHead>
+                <TableHead className="text-slate-300 font-medium">Client</TableHead>
+                <TableHead className="text-slate-300 font-medium">Type</TableHead>
+                <TableHead className="text-slate-300 font-medium">Montant</TableHead>
+                <TableHead className="text-slate-300 font-medium">Statut</TableHead>
+                <TableHead className="text-slate-300 font-medium">Agence</TableHead>
+                <TableHead className="text-slate-300 font-medium">Date décision</TableHead>
+                <TableHead className="text-slate-300 font-medium">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredContracts.map((contract) => (
-                <TableRow key={contract.id} className="hover:bg-slate-50">
-                  <TableCell className="font-medium">{contract.id}</TableCell>
-                  <TableCell>{contract.client}</TableCell>
+                <TableRow key={contract.id} className="border-slate-700 hover:bg-slate-800/30 transition-colors">
+                  <TableCell className="font-medium text-white">{contract.id}</TableCell>
+                  <TableCell className="text-slate-300">{contract.client}</TableCell>
                   <TableCell>
-                    <Badge variant="outline">{contract.type}</Badge>
+                    <Badge variant="outline" className="border-slate-600 text-slate-300">
+                      {contract.type}
+                    </Badge>
                   </TableCell>
-                  <TableCell className="font-semibold">{contract.montant}</TableCell>
+                  <TableCell className="font-semibold text-orange-400">{contract.montant}</TableCell>
                   <TableCell>{getStatusBadge(contract.statut)}</TableCell>
-                  <TableCell>{contract.agence}</TableCell>
-                  <TableCell>{contract.dateDecision}</TableCell>
+                  <TableCell className="text-slate-300">{contract.agence}</TableCell>
+                  <TableCell className="text-slate-300">{contract.dateDecision}</TableCell>
                   <TableCell>
-                    <Button variant="outline" size="sm">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="border-orange-500/30 text-orange-400 hover:bg-orange-500/20 hover:text-orange-300"
+                    >
                       Voir détails
                     </Button>
                   </TableCell>

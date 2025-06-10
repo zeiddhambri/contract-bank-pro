@@ -1,12 +1,11 @@
 
 import { useState } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
 
 interface CreateContractDialogProps {
   open: boolean;
@@ -14,157 +13,119 @@ interface CreateContractDialogProps {
 }
 
 const CreateContractDialog = ({ open, onOpenChange }: CreateContractDialogProps) => {
-  const { toast } = useToast();
   const [formData, setFormData] = useState({
     client: "",
-    typeFinancement: "",
+    type: "",
     montant: "",
-    devise: "EUR",
-    objet: "",
     agence: "",
-    numeroDecision: ""
+    description: ""
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Simulate contract creation
-    toast({
-      title: "Contrat créé avec succès",
-      description: `Le contrat pour ${formData.client} a été créé et est en cours de traitement.`,
-    });
-    
-    // Reset form and close dialog
+    // Handle form submission here
+    console.log("Form submitted:", formData);
+    onOpenChange(false);
+    // Reset form
     setFormData({
       client: "",
-      typeFinancement: "",
+      type: "",
       montant: "",
-      devise: "EUR",
-      objet: "",
       agence: "",
-      numeroDecision: ""
+      description: ""
     });
-    onOpenChange(false);
-  };
-
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="bg-slate-900 border-slate-700 text-white max-w-md">
         <DialogHeader>
-          <DialogTitle>Créer un nouveau contrat</DialogTitle>
-          <DialogDescription>
-            Saisissez les informations du nouveau contrat de financement
-          </DialogDescription>
+          <DialogTitle className="text-xl font-bold tracking-wide text-white">
+            NOUVEAU CONTRAT
+          </DialogTitle>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Client */}
-            <div className="space-y-2">
-              <Label htmlFor="client">Client *</Label>
-              <Input
-                id="client"
-                value={formData.client}
-                onChange={(e) => handleInputChange("client", e.target.value)}
-                placeholder="Nom du client"
-                required
-              />
-            </div>
-
-            {/* Type de financement */}
-            <div className="space-y-2">
-              <Label htmlFor="typeFinancement">Type de financement *</Label>
-              <Select value={formData.typeFinancement} onValueChange={(value) => handleInputChange("typeFinancement", value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner le type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="credit_ct">Crédit Court Terme</SelectItem>
-                  <SelectItem value="credit_mt">Crédit Moyen Terme</SelectItem>
-                  <SelectItem value="credit_lt">Crédit Long Terme</SelectItem>
-                  <SelectItem value="facilite">Facilité de caisse</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Montant */}
-            <div className="space-y-2">
-              <Label htmlFor="montant">Montant *</Label>
-              <Input
-                id="montant"
-                type="number"
-                value={formData.montant}
-                onChange={(e) => handleInputChange("montant", e.target.value)}
-                placeholder="100000"
-                required
-              />
-            </div>
-
-            {/* Devise */}
-            <div className="space-y-2">
-              <Label htmlFor="devise">Devise</Label>
-              <Select value={formData.devise} onValueChange={(value) => handleInputChange("devise", value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="EUR">EUR - Euro</SelectItem>
-                  <SelectItem value="TND">TND - Dinar Tunisien</SelectItem>
-                  <SelectItem value="USD">USD - Dollar US</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Agence */}
-            <div className="space-y-2">
-              <Label htmlFor="agence">Agence *</Label>
-              <Select value={formData.agence} onValueChange={(value) => handleInputChange("agence", value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner l'agence" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="tunis_centre">Tunis Centre</SelectItem>
-                  <SelectItem value="sfax">Sfax</SelectItem>
-                  <SelectItem value="sousse">Sousse</SelectItem>
-                  <SelectItem value="monastir">Monastir</SelectItem>
-                  <SelectItem value="gabes">Gabès</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Numéro de décision */}
-            <div className="space-y-2">
-              <Label htmlFor="numeroDecision">Numéro de décision</Label>
-              <Input
-                id="numeroDecision"
-                value={formData.numeroDecision}
-                onChange={(e) => handleInputChange("numeroDecision", e.target.value)}
-                placeholder="DEC-2024-001"
-              />
-            </div>
-          </div>
-
-          {/* Objet */}
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="objet">Objet du financement</Label>
-            <Textarea
-              id="objet"
-              value={formData.objet}
-              onChange={(e) => handleInputChange("objet", e.target.value)}
-              placeholder="Décrivez l'objet du financement..."
-              rows={3}
+            <Label htmlFor="client" className="text-slate-300">Client</Label>
+            <Input
+              id="client"
+              value={formData.client}
+              onChange={(e) => setFormData({ ...formData, client: e.target.value })}
+              placeholder="Nom du client"
+              className="bg-black/30 border-slate-600 text-white placeholder:text-slate-400"
+              required
             />
           </div>
 
-          <div className="flex justify-end space-x-4">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+          <div className="space-y-2">
+            <Label htmlFor="type" className="text-slate-300">Type de crédit</Label>
+            <Select value={formData.type} onValueChange={(value) => setFormData({ ...formData, type: value })}>
+              <SelectTrigger className="bg-black/30 border-slate-600 text-white">
+                <SelectValue placeholder="Sélectionner le type" />
+              </SelectTrigger>
+              <SelectContent className="bg-slate-800 border-slate-600">
+                <SelectItem value="credit_ct">Crédit CT</SelectItem>
+                <SelectItem value="credit_mt">Crédit MT</SelectItem>
+                <SelectItem value="credit_lt">Crédit LT</SelectItem>
+                <SelectItem value="credit_immobilier">Crédit Immobilier</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="montant" className="text-slate-300">Montant (€)</Label>
+            <Input
+              id="montant"
+              type="number"
+              value={formData.montant}
+              onChange={(e) => setFormData({ ...formData, montant: e.target.value })}
+              placeholder="Montant du crédit"
+              className="bg-black/30 border-slate-600 text-white placeholder:text-slate-400"
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="agence" className="text-slate-300">Agence</Label>
+            <Select value={formData.agence} onValueChange={(value) => setFormData({ ...formData, agence: value })}>
+              <SelectTrigger className="bg-black/30 border-slate-600 text-white">
+                <SelectValue placeholder="Sélectionner l'agence" />
+              </SelectTrigger>
+              <SelectContent className="bg-slate-800 border-slate-600">
+                <SelectItem value="tunis_centre">Tunis Centre</SelectItem>
+                <SelectItem value="sfax">Sfax</SelectItem>
+                <SelectItem value="sousse">Sousse</SelectItem>
+                <SelectItem value="gabes">Gabès</SelectItem>
+                <SelectItem value="bizerte">Bizerte</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="description" className="text-slate-300">Description</Label>
+            <Textarea
+              id="description"
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              placeholder="Description du contrat..."
+              className="bg-black/30 border-slate-600 text-white placeholder:text-slate-400 min-h-[80px]"
+            />
+          </div>
+
+          <div className="flex justify-end space-x-3 pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              className="border-slate-600 text-slate-300 hover:bg-slate-800"
+            >
               Annuler
             </Button>
-            <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+            <Button
+              type="submit"
+              className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white font-medium"
+            >
               Créer le contrat
             </Button>
           </div>
