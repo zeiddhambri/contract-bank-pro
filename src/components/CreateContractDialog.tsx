@@ -17,6 +17,7 @@ const CreateContractDialog = ({ open, onOpenChange }: CreateContractDialogProps)
     client: "",
     type: "",
     montant: "",
+    garantie: "",
     agence: "",
     description: ""
   });
@@ -31,6 +32,7 @@ const CreateContractDialog = ({ open, onOpenChange }: CreateContractDialogProps)
       client: "",
       type: "",
       montant: "",
+      garantie: "",
       agence: "",
       description: ""
     });
@@ -84,6 +86,22 @@ const CreateContractDialog = ({ open, onOpenChange }: CreateContractDialogProps)
               className="bg-black/30 border-slate-600 text-white placeholder:text-slate-400"
               required
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="garantie" className="text-slate-300">Garantie</Label>
+            <Select value={formData.garantie} onValueChange={(value) => setFormData({ ...formData, garantie: value })}>
+              <SelectTrigger className="bg-black/30 border-slate-600 text-white">
+                <SelectValue placeholder="Sélectionner la garantie" />
+              </SelectTrigger>
+              <SelectContent className="bg-slate-800 border-slate-600">
+                <SelectItem value="hypotheque">Hypothèque</SelectItem>
+                <SelectItem value="nantissement">Nantissement</SelectItem>
+                <SelectItem value="caution">Caution</SelectItem>
+                <SelectItem value="gage">Gage</SelectItem>
+                <SelectItem value="sans_garantie">Sans garantie</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-2">
