@@ -9,13 +9,63 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      contracts: {
+        Row: {
+          agence: string
+          client: string
+          created_at: string
+          date_decision: string
+          date_signature: string | null
+          description: string | null
+          garantie: string
+          id: string
+          montant: number
+          reference_decision: string
+          statut: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          agence: string
+          client: string
+          created_at?: string
+          date_decision?: string
+          date_signature?: string | null
+          description?: string | null
+          garantie: string
+          id?: string
+          montant: number
+          reference_decision: string
+          statut?: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          agence?: string
+          client?: string
+          created_at?: string
+          date_decision?: string
+          date_signature?: string | null
+          description?: string | null
+          garantie?: string
+          id?: string
+          montant?: number
+          reference_decision?: string
+          statut?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_reference_decision: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never

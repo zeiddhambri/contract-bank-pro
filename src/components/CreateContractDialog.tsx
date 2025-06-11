@@ -6,13 +6,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface CreateContractDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onContractCreated: () => void;
 }
 
-const CreateContractDialog = ({ open, onOpenChange }: CreateContractDialogProps) => {
+const CreateContractDialog = ({ open, onOpenChange, onContractCreated }: CreateContractDialogProps) => {
   const [formData, setFormData] = useState({
     client: "",
     type: "",
@@ -21,21 +24,58 @@ const CreateContractDialog = ({ open, onOpenChange }: CreateContractDialogProps)
     agence: "",
     description: ""
   });
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission here
-    console.log("Form submitted:", formData);
-    onOpenChange(false);
-    // Reset form
-    setFormData({
-      client: "",
-      type: "",
-      montant: "",
-      garantie: "",
-      agence: "",
-      description: ""
-    });
+    setIsLoading(true);
+
+    try {
+      const { error } = await supabase
+        .from('contracts')
+        .insert([
+          {
+            client: formData.client,
+            type: formData.type,
+            montant: parseFloat(formData.montant),
+            garantie: formData.garantie,
+            agence: formData.agence,
+            description: formData.description || null
+          }
+        ]);
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Contrat créé",
+        description: "Le contrat a été créé avec succès.",
+      });
+
+      onOpenChange(false);
+      onContractCreated();
+      
+      // Reset form
+      setFormData({
+        client: "",
+        type: "",
+        montant: "",
+        garantie: "",
+        agence: "",
+        description: ""
+      });
+    } catch (error) {
+      console.error("Error creating contract:", error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la création du contrat.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -137,14 +177,16 @@ const CreateContractDialog = ({ open, onOpenChange }: CreateContractDialogProps)
               variant="outline"
               onClick={() => onOpenChange(false)}
               className="border-slate-600 text-slate-300 hover:bg-slate-800"
+              disabled={isLoading}
             >
               Annuler
             </Button>
             <Button
               type="submit"
               className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white font-medium"
+              disabled={isLoading}
             >
-              Créer le contrat
+              {isLoading ? "Création..." : "Créer le contrat"}
             </Button>
           </div>
         </form>

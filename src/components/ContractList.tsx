@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -7,54 +7,43 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { FileText } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import type { Tables } from "@/integrations/supabase/types";
 
-const ContractList = () => {
+type Contract = Tables<'contracts'>;
+
+interface ContractListProps {
+  onRefresh?: number;
+}
+
+const ContractList = ({ onRefresh }: ContractListProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("tous");
+  const [contracts, setContracts] = useState<Contract[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Sample contract data
-  const contracts = [
-    {
-      id: "CT-2024-001",
-      client: "SARL Tech Innovation",
-      type: "Crédit MT",
-      montant: "500,000 €",
-      statut: "en_cours",
-      agence: "Tunis Centre",
-      dateDecision: "2024-05-15",
-      dateSignature: "2024-05-20"
-    },
-    {
-      id: "CT-2024-002",
-      client: "Société Moderne SARL",
-      type: "Crédit LT",
-      montant: "1,200,000 €",
-      statut: "attente_signature",
-      agence: "Sfax",
-      dateDecision: "2024-05-18",
-      dateSignature: "-"
-    },
-    {
-      id: "CT-2024-003",
-      client: "Export Plus SA",
-      type: "Crédit CT",
-      montant: "250,000 €",
-      statut: "valide",
-      agence: "Sousse",
-      dateDecision: "2024-05-10",
-      dateSignature: "2024-05-12"
-    },
-    {
-      id: "CT-2024-004",
-      client: "Industrial Corp",
-      type: "Crédit MT",
-      montant: "800,000 €",
-      statut: "alerte",
-      agence: "Tunis Centre",
-      dateDecision: "2024-05-22",
-      dateSignature: "-"
+  const fetchContracts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('contracts')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        throw error;
+      }
+
+      setContracts(data || []);
+    } catch (error) {
+      console.error("Error fetching contracts:", error);
+    } finally {
+      setIsLoading(false);
     }
-  ];
+  };
+
+  useEffect(() => {
+    fetchContracts();
+  }, [onRefresh]);
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
@@ -72,12 +61,67 @@ const ContractList = () => {
     );
   };
 
+  const getTypeLabel = (type: string) => {
+    const typeLabels = {
+      credit_ct: "Crédit CT",
+      credit_mt: "Crédit MT", 
+      credit_lt: "Crédit LT",
+      credit_immobilier: "Crédit Immobilier"
+    };
+    return typeLabels[type as keyof typeof typeLabels] || type;
+  };
+
+  const getGarantieLabel = (garantie: string) => {
+    const garantieLabels = {
+      hypotheque: "Hypothèque",
+      nantissement: "Nantissement",
+      caution: "Caution",
+      gage: "Gage",
+      sans_garantie: "Sans garantie"
+    };
+    return garantieLabels[garantie as keyof typeof garantieLabels] || garantie;
+  };
+
+  const getAgenceLabel = (agence: string) => {
+    const agenceLabels = {
+      tunis_centre: "Tunis Centre",
+      sfax: "Sfax",
+      sousse: "Sousse",
+      gabes: "Gabès",
+      bizerte: "Bizerte"
+    };
+    return agenceLabels[agence as keyof typeof agenceLabels] || agence;
+  };
+
   const filteredContracts = contracts.filter(contract => {
     const matchesSearch = contract.client.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         contract.id.toLowerCase().includes(searchTerm.toLowerCase());
+                         contract.reference_decision.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "tous" || contract.statut === statusFilter;
     return matchesSearch && matchesStatus;
   });
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('fr-FR');
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('fr-FR', {
+      style: 'currency',
+      currency: 'EUR'
+    }).format(amount);
+  };
+
+  if (isLoading) {
+    return (
+      <Card className="bg-black/40 border-slate-700/50 backdrop-blur-sm">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-center">
+            <p className="text-slate-400">Chargement des contrats...</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="bg-black/40 border-slate-700/50 backdrop-blur-sm">
@@ -119,10 +163,11 @@ const ContractList = () => {
           <Table>
             <TableHeader>
               <TableRow className="border-slate-700 hover:bg-slate-800/50">
-                <TableHead className="text-slate-300 font-medium">Référence</TableHead>
+                <TableHead className="text-slate-300 font-medium">Référence Décision</TableHead>
                 <TableHead className="text-slate-300 font-medium">Client</TableHead>
                 <TableHead className="text-slate-300 font-medium">Type</TableHead>
                 <TableHead className="text-slate-300 font-medium">Montant</TableHead>
+                <TableHead className="text-slate-300 font-medium">Garantie</TableHead>
                 <TableHead className="text-slate-300 font-medium">Statut</TableHead>
                 <TableHead className="text-slate-300 font-medium">Agence</TableHead>
                 <TableHead className="text-slate-300 font-medium">Date décision</TableHead>
@@ -132,17 +177,18 @@ const ContractList = () => {
             <TableBody>
               {filteredContracts.map((contract) => (
                 <TableRow key={contract.id} className="border-slate-700 hover:bg-slate-800/30 transition-colors">
-                  <TableCell className="font-medium text-white">{contract.id}</TableCell>
+                  <TableCell className="font-medium text-white">{contract.reference_decision}</TableCell>
                   <TableCell className="text-slate-300">{contract.client}</TableCell>
                   <TableCell>
                     <Badge variant="outline" className="border-slate-600 text-slate-300">
-                      {contract.type}
+                      {getTypeLabel(contract.type)}
                     </Badge>
                   </TableCell>
-                  <TableCell className="font-semibold text-orange-400">{contract.montant}</TableCell>
+                  <TableCell className="font-semibold text-orange-400">{formatCurrency(contract.montant)}</TableCell>
+                  <TableCell className="text-slate-300">{getGarantieLabel(contract.garantie)}</TableCell>
                   <TableCell>{getStatusBadge(contract.statut)}</TableCell>
-                  <TableCell className="text-slate-300">{contract.agence}</TableCell>
-                  <TableCell className="text-slate-300">{contract.dateDecision}</TableCell>
+                  <TableCell className="text-slate-300">{getAgenceLabel(contract.agence)}</TableCell>
+                  <TableCell className="text-slate-300">{formatDate(contract.date_decision)}</TableCell>
                   <TableCell>
                     <Button 
                       variant="outline" 
