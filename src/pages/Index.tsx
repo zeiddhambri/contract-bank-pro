@@ -36,7 +36,7 @@ const Index = () => {
         <div className="flex h-16 items-center justify-between px-6">
           <div className="flex items-center space-x-4">
             <h1 className="text-2xl font-bold text-white tracking-wider">
-              SI<span className="text-orange-400">RINE</span>
+              CONTRACT <span className="text-orange-400">MANAGER</span>
             </h1>
           </div>
           

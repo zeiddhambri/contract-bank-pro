@@ -1,13 +1,47 @@
 
-import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import React from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+
+const formSchema = z.object({
+  client: z.string().min(1, "Le nom du client est requis"),
+  type: z.string().min(1, "Le type de contrat est requis"),
+  montant: z.number().min(0, "Le montant doit être positif"),
+  garantie: z.string().min(1, "La garantie est requise"),
+  agence: z.string().min(1, "L'agence est requise"),
+  description: z.string().optional(),
+});
+
+type FormData = z.infer<typeof formSchema>;
 
 interface CreateContractDialogProps {
   open: boolean;
@@ -16,180 +50,188 @@ interface CreateContractDialogProps {
 }
 
 const CreateContractDialog = ({ open, onOpenChange, onContractCreated }: CreateContractDialogProps) => {
-  const [formData, setFormData] = useState({
-    client: "",
-    type: "",
-    montant: "",
-    garantie: "",
-    agence: "",
-    description: ""
-  });
-  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const form = useForm<FormData>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      client: "",
+      type: "",
+      montant: 0,
+      garantie: "",
+      agence: "",
+      description: "",
+    },
+  });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-
+  const onSubmit = async (data: FormData) => {
     try {
       const { error } = await supabase
-        .from('contracts')
-        .insert([
-          {
-            client: formData.client,
-            type: formData.type,
-            montant: parseFloat(formData.montant),
-            garantie: formData.garantie,
-            agence: formData.agence,
-            description: formData.description || null
-          }
-        ]);
+        .from("contracts")
+        .insert([{
+          client: data.client,
+          type: data.type,
+          montant: data.montant,
+          garantie: data.garantie,
+          agence: data.agence,
+          description: data.description || "",
+        }]);
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
       toast({
         title: "Contrat créé",
-        description: "Le contrat a été créé avec succès.",
+        description: "Le nouveau contrat a été créé avec succès.",
       });
 
+      form.reset();
       onOpenChange(false);
       onContractCreated();
-      
-      // Reset form
-      setFormData({
-        client: "",
-        type: "",
-        montant: "",
-        garantie: "",
-        agence: "",
-        description: ""
-      });
     } catch (error) {
       console.error("Error creating contract:", error);
       toast({
         title: "Erreur",
-        description: "Une erreur est survenue lors de la création du contrat.",
+        description: "Une erreur s'est produite lors de la création du contrat.",
         variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-slate-900 border-slate-700 text-white max-w-md">
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold tracking-wide text-white">
-            NOUVEAU CONTRAT
-          </DialogTitle>
+          <DialogTitle>Nouveau Contrat</DialogTitle>
+          <DialogDescription>
+            Créez un nouveau contrat de financement bancaire.
+          </DialogDescription>
         </DialogHeader>
-        
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="client" className="text-slate-300">Client</Label>
-            <Input
-              id="client"
-              value={formData.client}
-              onChange={(e) => setFormData({ ...formData, client: e.target.value })}
-              placeholder="Nom du client"
-              className="bg-black/30 border-slate-600 text-white placeholder:text-slate-400"
-              required
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="client"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Client</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Nom du client" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="type" className="text-slate-300">Type de crédit</Label>
-            <Select value={formData.type} onValueChange={(value) => setFormData({ ...formData, type: value })}>
-              <SelectTrigger className="bg-black/30 border-slate-600 text-white">
-                <SelectValue placeholder="Sélectionner le type" />
-              </SelectTrigger>
-              <SelectContent className="bg-slate-800 border-slate-600">
-                <SelectItem value="credit_ct">Crédit CT</SelectItem>
-                <SelectItem value="credit_mt">Crédit MT</SelectItem>
-                <SelectItem value="credit_lt">Crédit LT</SelectItem>
-                <SelectItem value="credit_immobilier">Crédit Immobilier</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="montant" className="text-slate-300">Montant (€)</Label>
-            <Input
-              id="montant"
-              type="number"
-              value={formData.montant}
-              onChange={(e) => setFormData({ ...formData, montant: e.target.value })}
-              placeholder="Montant du crédit"
-              className="bg-black/30 border-slate-600 text-white placeholder:text-slate-400"
-              required
+            <FormField
+              control={form.control}
+              name="type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Type de Contrat</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sélectionnez le type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="credit_immobilier">Crédit Immobilier</SelectItem>
+                      <SelectItem value="credit_consommation">Crédit à la Consommation</SelectItem>
+                      <SelectItem value="credit_auto">Crédit Auto</SelectItem>
+                      <SelectItem value="decouvert_autorise">Découvert Autorisé</SelectItem>
+                      <SelectItem value="pret_personnel">Prêt Personnel</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="garantie" className="text-slate-300">Garantie</Label>
-            <Select value={formData.garantie} onValueChange={(value) => setFormData({ ...formData, garantie: value })}>
-              <SelectTrigger className="bg-black/30 border-slate-600 text-white">
-                <SelectValue placeholder="Sélectionner la garantie" />
-              </SelectTrigger>
-              <SelectContent className="bg-slate-800 border-slate-600">
-                <SelectItem value="hypotheque">Hypothèque</SelectItem>
-                <SelectItem value="nantissement">Nantissement</SelectItem>
-                <SelectItem value="caution">Caution</SelectItem>
-                <SelectItem value="gage">Gage</SelectItem>
-                <SelectItem value="sans_garantie">Sans garantie</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="agence" className="text-slate-300">Agence</Label>
-            <Select value={formData.agence} onValueChange={(value) => setFormData({ ...formData, agence: value })}>
-              <SelectTrigger className="bg-black/30 border-slate-600 text-white">
-                <SelectValue placeholder="Sélectionner l'agence" />
-              </SelectTrigger>
-              <SelectContent className="bg-slate-800 border-slate-600">
-                <SelectItem value="tunis_centre">Tunis Centre</SelectItem>
-                <SelectItem value="sfax">Sfax</SelectItem>
-                <SelectItem value="sousse">Sousse</SelectItem>
-                <SelectItem value="gabes">Gabès</SelectItem>
-                <SelectItem value="bizerte">Bizerte</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="description" className="text-slate-300">Description</Label>
-            <Textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Description du contrat..."
-              className="bg-black/30 border-slate-600 text-white placeholder:text-slate-400 min-h-[80px]"
+            <FormField
+              control={form.control}
+              name="montant"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Montant (€)</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      placeholder="0"
+                      {...field}
+                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-
-          <div className="flex justify-end space-x-3 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              className="border-slate-600 text-slate-300 hover:bg-slate-800"
-              disabled={isLoading}
-            >
-              Annuler
-            </Button>
-            <Button
-              type="submit"
-              className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white font-medium"
-              disabled={isLoading}
-            >
-              {isLoading ? "Création..." : "Créer le contrat"}
-            </Button>
-          </div>
-        </form>
+            <FormField
+              control={form.control}
+              name="garantie"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Garantie</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sélectionnez la garantie" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="hypotheque">Hypothèque</SelectItem>
+                      <SelectItem value="caution">Caution</SelectItem>
+                      <SelectItem value="nantissement">Nantissement</SelectItem>
+                      <SelectItem value="gage">Gage</SelectItem>
+                      <SelectItem value="aucune">Aucune</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="agence"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Agence</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sélectionnez l'agence" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="agence_centre">Agence Centre</SelectItem>
+                      <SelectItem value="agence_nord">Agence Nord</SelectItem>
+                      <SelectItem value="agence_sud">Agence Sud</SelectItem>
+                      <SelectItem value="agence_est">Agence Est</SelectItem>
+                      <SelectItem value="agence_ouest">Agence Ouest</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description (optionnel)</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Détails supplémentaires..."
+                      className="resize-none"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <DialogFooter>
+              <Button type="submit">Créer le Contrat</Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );
