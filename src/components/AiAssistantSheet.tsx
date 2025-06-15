@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { MessageCircle } from "lucide-react";
+import { toast } from "@/components/ui/use-toast";
 
 interface AiAssistantSheetProps {
   open: boolean;
@@ -21,42 +22,78 @@ const EXAMPLE_QUESTIONS = [
   "Comment ajouter un nouvel utilisateur ?",
 ];
 
+type Message = { role: "user" | "assistant"; content: string };
+
+const initialMessages: Message[] = [
+  {
+    role: "assistant",
+    content:
+      "Bonjour 👋\nJe suis votre assistant IA. Posez-moi vos questions sur la plateforme, les statistiques, ou demandez-moi de l’aide technique !",
+  },
+];
+
 const AiAssistantSheet: React.FC<AiAssistantSheetProps> = ({
   open,
   onOpenChange,
 }) => {
-  const [messages, setMessages] = useState<
-    { role: "user" | "assistant"; content: string }[]
-  >([
-    {
-      role: "assistant",
-      content:
-        "Bonjour 👋\nJe suis votre assistant IA. Posez-moi vos questions sur la plateforme, les statistiques, ou demandez-moi de l’aide technique !",
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (open) {
-      // scroll to bottom on open or when messages change
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   }, [open, messages]);
 
-  const handleSend = (e?: React.FormEvent) => {
+  const handleSend = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!input.trim()) return;
-    setMessages((prev) => [
-      ...prev,
-      { role: "user", content: input },
-      {
-        role: "assistant",
-        content:
-          "⏳ L’IA n’est pas encore connectée. (Cet assistant pourra bientôt répondre à vos questions ; demandez à Lovable d’activer l’API OpenAI ici !)",
-      },
-    ]);
+    if (!input.trim() || loading) return;
+
+    const userMsg: Message = { role: "user", content: input };
+    setMessages((prev) => [...prev, userMsg]);
     setInput("");
+    setLoading(true);
+
+    try {
+      const res = await fetch(
+        "https://cqyuhztxmaawzzhdartp.functions.supabase.co/ai-assistant-chat",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            messages: [...messages.slice(1), userMsg] // Ignore greeting for OpenAI
+              .map(({ role, content }) => ({ role, content })),
+          }),
+        }
+      );
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data?.error || "Erreur lors de la requête à l'IA");
+      }
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: data.answer },
+      ]);
+    } catch (err: any) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content:
+            "❌ Erreur lors de la génération de la réponse. Merci de réessayer plus tard.",
+        },
+      ]);
+      toast({
+        title: "Erreur Assistant IA",
+        description: err?.message ?? "Erreur via OpenAI.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -70,7 +107,6 @@ const AiAssistantSheet: React.FC<AiAssistantSheetProps> = ({
             </span>
           </SheetTitle>
         </SheetHeader>
-        {/* Chat area */}
         <div className="flex-1 overflow-y-auto px-6 py-4 bg-background flex flex-col">
           {messages.map((msg, i) => (
             <div
@@ -82,7 +118,9 @@ const AiAssistantSheet: React.FC<AiAssistantSheetProps> = ({
               }`}
             >
               {msg.role === "user" ? (
-                <span className="inline-block bg-primary text-primary-foreground px-4 py-2 rounded-lg">{msg.content}</span>
+                <span className="inline-block bg-primary text-primary-foreground px-4 py-2 rounded-lg">
+                  {msg.content}
+                </span>
               ) : (
                 msg.content
               )}
@@ -90,7 +128,6 @@ const AiAssistantSheet: React.FC<AiAssistantSheetProps> = ({
           ))}
           <div ref={messagesEndRef} />
         </div>
-        {/* Example questions */}
         <div className="px-6 pb-2">
           <div className="flex flex-wrap gap-2">
             {EXAMPLE_QUESTIONS.map((q, idx) => (
@@ -107,7 +144,6 @@ const AiAssistantSheet: React.FC<AiAssistantSheetProps> = ({
             ))}
           </div>
         </div>
-        {/* Input area */}
         <form
           onSubmit={handleSend}
           className="flex items-center gap-2 border-t px-6 py-4 bg-background"
@@ -119,10 +155,11 @@ const AiAssistantSheet: React.FC<AiAssistantSheetProps> = ({
             onChange={(e) => setInput(e.target.value)}
             placeholder="Posez votre question…"
             autoFocus
+            disabled={loading}
             aria-label="Zone de saisie pour l’Assistant IA"
           />
-          <Button type="submit" disabled={!input.trim()}>
-            Envoyer
+          <Button type="submit" disabled={!input.trim() || loading}>
+            {loading ? "..." : "Envoyer"}
           </Button>
         </form>
       </SheetContent>
