@@ -1,10 +1,10 @@
-
 import ContractList from "@/components/ContractList";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AlertsPanel from "@/components/AlertsPanel";
 import AuditLogPanel from "@/components/AuditLogPanel";
 import { useAuth } from "@/contexts/AuthContext";
 import UserManagementPanel from "@/components/UserManagementPanel";
+import ContractTemplateManager from "@/components/ContractTemplateManager";
 
 const Index = () => {
   const { userRole } = useAuth();
@@ -18,6 +18,7 @@ const Index = () => {
           <TabsTrigger value="contracts">Contrats</TabsTrigger>
           <TabsTrigger value="alerts">Alertes</TabsTrigger>
           <TabsTrigger value="audit">Audit Trail</TabsTrigger>
+          {isAdmin && <TabsTrigger value="templates">Modèles</TabsTrigger>}
           {isAdmin && <TabsTrigger value="admin">Administration</TabsTrigger>}
         </TabsList>
         <TabsContent value="contracts">
@@ -30,6 +31,11 @@ const Index = () => {
           <AuditLogPanel />
         </TabsContent>
         {isAdmin && (
+          <TabsContent value="templates">
+            <ContractTemplateManager />
+          </TabsContent>
+        )}
+        {isAdmin && (
           <TabsContent value="admin">
             <UserManagementPanel />
           </TabsContent>
@@ -40,4 +46,3 @@ const Index = () => {
 };
 
 export default Index;
-
