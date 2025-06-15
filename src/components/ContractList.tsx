@@ -33,8 +33,8 @@ const ContractList = ({ onRefresh }: ContractListProps) => {
         throw error;
       }
 
-      // Patch: force old contracts to have currency:'EUR' by default
-      setContracts((data || []).map((item) => ({ ...item, currency: item.currency || 'EUR' })));
+      // Patch: just use returned data—no currency prop to add
+      setContracts((data || []));
     } catch (error) {
       console.error("Error fetching contracts:", error);
     } finally {
@@ -46,14 +46,9 @@ const ContractList = ({ onRefresh }: ContractListProps) => {
     fetchContracts();
   }, [onRefresh]);
 
-  const formatCurrency = (amount: number, currency: string | undefined) => {
-    const currencySymbols = {
-      EUR: '€',
-      USD: '$',
-      TND: 'TND'
-    };
-
-    const symbol = currencySymbols[currency as keyof typeof currencySymbols] || currency || 'EUR';
+  const formatCurrency = (amount: number) => {
+    // Use EUR by default, as currency field does not exist
+    const symbol = "€";
     return new Intl.NumberFormat('fr-FR', {
       style: 'decimal',
       minimumFractionDigits: 2,
@@ -216,7 +211,7 @@ const ContractList = ({ onRefresh }: ContractListProps) => {
                     </Badge>
                   </TableCell>
                   <TableCell className="font-semibold text-orange-400">
-                    {formatCurrency(contract.montant, contract.currency || 'EUR')}
+                    {formatCurrency(contract.montant)}
                   </TableCell>
                   <TableCell className="text-slate-300">{getGarantieLabel(contract.garantie)}</TableCell>
                   <TableCell>{getStatusBadge(contract.statut)}</TableCell>
