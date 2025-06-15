@@ -1,9 +1,79 @@
-
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { FileText, Clock, AlertTriangle, CheckCircle, DollarSign, TrendingUp } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  FileText,
+  Clock,
+  AlertTriangle,
+  CheckCircle,
+  DollarSign,
+  TrendingUp,
+  ArrowDown,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { PieChart, Pie, Cell } from "recharts";
+import {
+  ChartConfig,
+  ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
+
+const STATUT_OPTIONS: Record<string, string> = {
+  en_cours: "En cours",
+  attente_signature: "Attente signature",
+  valide: "Validé",
+  refuse: "Refusé",
+  alerte: "Alerte",
+};
+
+const getStatutLabel = (statut: string) => {
+  return STATUT_OPTIONS[statut] || statut;
+};
+
+const STATUS_COLORS: Record<string, string> = {
+  en_cours: "hsl(var(--chart-1))",
+  attente_signature: "hsl(var(--chart-2))",
+  valide: "hsl(var(--chart-3))",
+  refuse: "hsl(var(--chart-4))",
+  alerte: "hsl(var(--chart-5))",
+};
+
+const chartConfig = Object.keys(STATUT_OPTIONS).reduce((acc, key) => {
+  acc[key] = {
+    label: STATUT_OPTIONS[key],
+    color: STATUS_COLORS[key],
+  };
+  return acc;
+}, {} as ChartConfig);
+
+const KpiCard = ({
+  title,
+  value,
+  icon: Icon,
+  color,
+}: {
+  title: string;
+  value: string | number;
+  icon: React.ElementType;
+  color: string;
+}) => (
+  <Card className="bg-slate-800/50 border-slate-700/50 p-4">
+    <div className="flex items-center justify-between">
+      <div>
+        <p className="text-sm text-slate-400">{title}</p>
+        <p className="text-3xl font-bold text-white">{value}</p>
+      </div>
+      <Icon className={`h-8 w-8 ${color}`} />
+    </div>
+  </Card>
+);
 
 const DashboardStats = () => {
   const [loading, setLoading] = useState(true);
@@ -14,30 +84,25 @@ const DashboardStats = () => {
     validatedThisMonth: 0,
     totalVolume: 0,
     creditMTLT: 0,
+    statusDistribution: [] as ({ name: string; value: number; fill: string })[],
   });
 
-  // Pour éviter l'affichage du bouton édition
-  // et regrouper tout le calcul ici
   useEffect(() => {
     let ignore = false;
     async function computeStats() {
       setLoading(true);
       const { data, error } = await supabase
         .from("contracts")
-        .select(
-          "statut,type,montant,date_decision"
-        );
+        .select("statut,type,montant,date_decision");
       if (error || !data) {
         setLoading(false);
         return;
       }
 
-      // Dates du mois courant
       const now = new Date();
       const currentMonth = now.getMonth();
       const currentYear = now.getFullYear();
 
-      // Calcul du volume total (en EUR)
       let totalVolume = 0;
       let activeContracts = 0;
       let pendingSignature = 0;
@@ -45,18 +110,27 @@ const DashboardStats = () => {
       let validatedThisMonth = 0;
       let creditMTLT = 0;
 
+      const statusCounts = data.reduce(
+        (acc, contract) => {
+          const status = contract.statut;
+          if (status) {
+            acc[status] = (acc[status] || 0) + 1;
+          }
+          return acc;
+        },
+        {} as Record<string, number>
+      );
+
       data.forEach((row) => {
         const statut = row.statut;
         const type = row.type;
         const montant = Number(row.montant) || 0;
-        // For volume, on somme tout
         totalVolume += montant;
 
         if (statut === "en_cours") activeContracts += 1;
         if (statut === "attente_signature") pendingSignature += 1;
         if (statut === "alerte") activeAlerts += 1;
 
-        // Validés ce mois (crédits MT/LT)
         if (
           (type === "credit_mt" || type === "credit_lt") &&
           statut === "valide" &&
@@ -70,7 +144,6 @@ const DashboardStats = () => {
             validatedThisMonth += 1;
         }
 
-        // Crédit MT/LT encours (total des montants MT/LT, peu clair : volume ou nb valides ? On reprend en volume validés)
         if (
           (type === "credit_mt" || type === "credit_lt") &&
           (statut === "valide" || statut === "en_cours")
@@ -78,6 +151,14 @@ const DashboardStats = () => {
           creditMTLT += montant;
         }
       });
+      
+      const statusDistribution = Object.entries(statusCounts).map(
+        ([name, value]) => ({
+          name,
+          value,
+          fill: STATUS_COLORS[name] || "#8884d8",
+        })
+      );
 
       if (!ignore) {
         setStatsData({
@@ -87,176 +168,111 @@ const DashboardStats = () => {
           validatedThisMonth,
           totalVolume,
           creditMTLT,
+          statusDistribution,
         });
         setLoading(false);
       }
     }
     computeStats();
-    return () => { ignore = true };
+    return () => {
+      ignore = true;
+    };
   }, []);
-
-  const stats = [
-    {
-      id: "activeContracts",
-      title: "Contrats Actifs",
-      value: statsData.activeContracts.toLocaleString(),
-      change: "", // Plus de simulation du pourcentage
-      icon: FileText,
-      color: "text-blue-400",
-      bgGradient: "from-blue-600/20 to-blue-800/20",
-    },
-    {
-      id: "pendingSignature",
-      title: "En Attente Signature",
-      value: statsData.pendingSignature.toLocaleString(),
-      change: "",
-      icon: Clock,
-      color: "text-orange-400",
-      bgGradient: "from-orange-600/20 to-orange-800/20",
-    },
-    {
-      id: "activeAlerts",
-      title: "Alertes Actives",
-      value: statsData.activeAlerts.toLocaleString(),
-      change: "",
-      icon: AlertTriangle,
-      color: "text-red-400",
-      bgGradient: "from-red-600/20 to-red-800/20",
-    },
-    {
-      id: "validatedThisMonth",
-      title: "Validés ce mois (MT/LT)",
-      value: statsData.validatedThisMonth.toLocaleString(),
-      change: "",
-      icon: CheckCircle,
-      color: "text-green-400",
-      bgGradient: "from-green-600/20 to-green-800/20",
-    },
-  ];
-
-  const financialStats = [
-    {
-      id: "totalVolume",
-      title: "Volume Total",
-      value: statsData.totalVolume.toLocaleString("fr-FR", {
-        style: "decimal",
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }) + " €",
-      subtitle: "Engagements en cours",
-      icon: DollarSign,
-      trend: "",
-    },
-    {
-      id: "creditMTLT",
-      title: "Crédits MT/LT",
-      value: statsData.creditMTLT.toLocaleString("fr-FR", {
-        style: "decimal",
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }) + " €",
-      subtitle: "Moyenne/Long terme en cours/validés",
-      icon: TrendingUp,
-      trend: "",
-    },
-  ];
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-1 space-y-4">
           {[...Array(4)].map((_, i) => (
-            <Card
-              key={i}
-              className="bg-black/40 border-slate-700/50 backdrop-blur-sm"
-            >
-              <CardContent className="p-6">
-                <div className="animate-pulse h-10 bg-slate-700/30 rounded" />
-              </CardContent>
-            </Card>
+             <div key={i} className="animate-pulse h-24 bg-slate-700/30 rounded-lg" />
           ))}
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {[...Array(2)].map((_, i) => (
-            <Card
-              key={i}
-              className="bg-gradient-to-r from-orange-600/20 to-red-600/20 border-orange-500/30 backdrop-blur-sm"
-            >
-              <CardContent className="p-6 bg-amber-600">
-                <div className="animate-pulse h-10 bg-orange-900/40 rounded" />
-              </CardContent>
-            </Card>
-          ))}
+        <div className="lg:col-span-2">
+            <div className="animate-pulse h-[400px] bg-slate-700/30 rounded-lg" />
         </div>
       </div>
     );
   }
 
-  return (
-    <div className="space-y-6">
-      {/* Main Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, index) => {
-          const IconComponent = stat.icon;
-          return (
-            <Card
-              key={index}
-              className="bg-black/40 border-slate-700/50 backdrop-blur-sm hover:bg-black/50 transition-all duration-300 hover:shadow-lg hover:shadow-orange-500/10 group"
-            >
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-2 flex-1">
-                    <p className="text-sm font-medium text-slate-400">
-                      {stat.title}
-                    </p>
-                    <div className="flex items-center space-x-2">
-                      <p className="text-2xl font-bold text-white">
-                        {stat.value}
-                      </p>
-                    </div>
-                  </div>
-                  <div
-                    className={`p-3 rounded-full bg-gradient-to-br ${stat.bgGradient} border border-slate-600/30`}
-                  >
-                    <IconComponent className={`h-6 w-6 ${stat.color}`} />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+  const kpis = [
+    {
+      title: "Contrats Actifs",
+      value: statsData.activeContracts.toLocaleString(),
+      icon: FileText,
+      color: "text-blue-400",
+    },
+    {
+      title: "En Attente Signature",
+      value: statsData.pendingSignature.toLocaleString(),
+      icon: Clock,
+      color: "text-orange-400",
+    },
+    {
+      title: "Alertes Actives",
+      value: statsData.activeAlerts.toLocaleString(),
+      icon: AlertTriangle,
+      color: "text-red-400",
+    },
+    {
+      title: "Validés ce mois (MT/LT)",
+      value: statsData.validatedThisMonth.toLocaleString(),
+      icon: CheckCircle,
+      color: "text-green-400",
+    },
+  ];
 
-      {/* Financial Stats */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {financialStats.map((stat, index) => {
-          const IconComponent = stat.icon;
-          return (
-            <Card
-              key={index}
-              className="bg-gradient-to-r from-orange-600/20 to-red-600/20 border-orange-500/30 backdrop-blur-sm hover:from-orange-600/30 hover:to-red-600/30 transition-all duration-300 group"
-            >
-              <CardContent className="p-6 bg-amber-600">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-2">
-                    <p className="text-orange-200 text-sm font-medium">
-                      {stat.title}
-                    </p>
-                    <div className="flex items-center space-x-2">
-                      <p className="text-3xl font-bold text-white">
-                        {stat.value}
-                      </p>
-                    </div>
-                    <p className="text-orange-300 text-sm">{stat.subtitle}</p>
-                  </div>
-                  <div className="p-3 bg-white/20 rounded-full border border-white/20">
-                    <IconComponent className="h-8 w-8 text-white" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="lg:col-span-1 space-y-4">
+        <h2 className="text-xl font-bold text-white">Indicateurs de Performance</h2>
+        <div className="space-y-2">
+           {kpis.map((kpi, index) => (
+             <React.Fragment key={kpi.title}>
+              <KpiCard {...kpi} />
+              {index < kpis.length - 1 && <ArrowDown className="mx-auto h-6 w-6 text-slate-600" />}
+             </React.Fragment>
+           ))}
+        </div>
+      </div>
+      <div className="lg:col-span-2 space-y-6">
+        <Card className="bg-black/40 border-slate-700/50 backdrop-blur-sm">
+          <CardHeader>
+            <CardTitle className="text-white">Répartition par Statut</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[350px] w-full">
+              <ChartContainer
+                config={chartConfig}
+                className="mx-auto aspect-square h-full"
+              >
+                <PieChart>
+                  <ChartTooltip
+                    cursor={false}
+                    content={<ChartTooltipContent hideLabel />}
+                  />
+                  <Pie
+                    data={statsData.statusDistribution}
+                    dataKey="value"
+                    nameKey="name"
+                    innerRadius="65%"
+                    strokeWidth={5}
+                  >
+                    {statsData.statusDistribution.map((entry) => (
+                      <Cell
+                        key={entry.name}
+                        fill={entry.fill}
+                        className="focus:outline-none"
+                      />
+                    ))}
+                  </Pie>
+                  <ChartLegend
+                    content={<ChartLegendContent nameKey="name" />}
+                  />
+                </PieChart>
+              </ChartContainer>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

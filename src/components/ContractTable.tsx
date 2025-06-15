@@ -24,7 +24,7 @@ interface ContractTableProps {
   contracts: Tables<'contracts', 'Row'>[];
   isLoading: boolean;
   updatingContractId: string | null;
-  handleContractUpdate: (contractId: string, updates: Partial<Tables<'contracts', 'Update'>>) => Promise<void>;
+  handleContractUpdate: (contractId: string, updates: Partial<Tables<'contracts', 'Row'>>) => Promise<void>;
 }
 
 const ContractTable: React.FC<ContractTableProps> = ({
