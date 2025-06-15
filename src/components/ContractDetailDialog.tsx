@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import {
   Dialog,
@@ -10,11 +9,12 @@ import {
 import { Button } from "@/components/ui/button";
 import ContractStatusSelect from "./ContractStatusSelect";
 import { toast } from "@/hooks/use-toast";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Download } from "lucide-react";
 import { Tables, TablesUpdate } from "@/integrations/supabase/types";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { AGENCE_LABELS } from "@/lib/contract-helpers";
+import { supabase } from "@/integrations/supabase/client";
 
 const ALERT_TYPES = [
   {
@@ -110,6 +110,11 @@ const ContractDetailDialog: React.FC<ContractDetailDialogProps> = ({
     // Ici on pourrait appeler une fonction backend pour stocker l’alerte
   };
 
+  const getFileUrl = (filePath: string) => {
+    const { data } = supabase.storage.from('contract_files').getPublicUrl(filePath);
+    return data.publicUrl;
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto">
@@ -151,6 +156,17 @@ const ContractDetailDialog: React.FC<ContractDetailDialogProps> = ({
               onChange={(v) => handleFieldChange('statut', v)}
             />
           </div>
+          {contract.file_path && (
+            <div>
+              <Label className="text-xs text-muted-foreground">Fichier</Label>
+              <Button asChild variant="outline" className="mt-1 w-full justify-start">
+                <a href={getFileUrl(contract.file_path)} target="_blank" rel="noopener noreferrer">
+                  <Download className="mr-2 h-4 w-4" />
+                  Télécharger le fichier zippé
+                </a>
+              </Button>
+            </div>
+          )}
           <div>
             <div className="text-xs text-muted-foreground mb-1">Type d’alerte</div>
             <select

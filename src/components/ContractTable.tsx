@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import {
   Table,
@@ -20,7 +19,7 @@ import {
   getTypeLabel,
 } from "@/lib/contract-helpers";
 import { Tables, TablesUpdate } from "@/integrations/supabase/types";
-import { Trash2 } from "lucide-react";
+import { Paperclip, Trash2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,6 +31,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ContractTableProps {
   contracts: Tables<'contracts'>[];
@@ -54,6 +54,11 @@ const ContractTable: React.FC<ContractTableProps> = ({
   const handleVoirDetails = (contract: Tables<'contracts'>) => {
     setSelectedContract(contract);
     setDialogOpen(true);
+  };
+
+  const getFileUrl = (filePath: string) => {
+    const { data } = supabase.storage.from('contract_files').getPublicUrl(filePath);
+    return data.publicUrl;
   };
 
   if (isLoading) {
@@ -113,6 +118,13 @@ const ContractTable: React.FC<ContractTableProps> = ({
                     >
                       Voir détails
                     </Button>
+                    {contract.file_path && (
+                        <Button asChild variant="ghost" size="icon">
+                            <a href={getFileUrl(contract.file_path)} target="_blank" rel="noopener noreferrer" title="Télécharger le fichier">
+                                <Paperclip className="h-4 w-4" />
+                            </a>
+                        </Button>
+                    )}
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button
