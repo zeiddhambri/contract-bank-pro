@@ -149,7 +149,7 @@ const DashboardStats = () => {
         </div>
       </div>
       <div className="lg:col-span-2">
-        <Card>
+        <Card className="bg-gradient-to-br from-card to-background/50 border-border/60">
           <CardHeader>
             <CardTitle className="text-lg">Répartition par Statut</CardTitle>
           </CardHeader>

@@ -1,8 +1,7 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, Clock, FileX } from "lucide-react";
+import { AlertTriangle, Clock, FileX, CheckCircle } from "lucide-react";
 
 const AlertsPanel = () => {
   const alerts = [
@@ -51,75 +50,55 @@ const AlertsPanel = () => {
   const getAlertIcon = (type: string) => {
     switch (type) {
       case "document_manquant":
-        return <FileX className="h-5 w-5" />;
+        return <FileX className="h-5 w-5 text-muted-foreground" />;
       case "delai_depasse":
-        return <Clock className="h-5 w-5" />;
+        return <Clock className="h-5 w-5 text-muted-foreground" />;
       default:
-        return <AlertTriangle className="h-5 w-5" />;
+        return <AlertTriangle className="h-5 w-5 text-muted-foreground" />;
     }
   };
 
   const getPriorityBadge = (priority: string) => {
-    const config = {
-      haute: { label: "Haute", color: "bg-red-600/20 text-red-400 border-red-500/30" },
-      moyenne: { label: "Moyenne", color: "bg-orange-600/20 text-orange-400 border-orange-500/30" },
-      basse: { label: "Basse", color: "bg-yellow-600/20 text-yellow-400 border-yellow-500/30" }
-    };
-    
-    const priorityConfig = config[priority as keyof typeof config] || config.moyenne;
-    return (
-      <Badge className={priorityConfig.color}>
-        {priorityConfig.label}
-      </Badge>
-    );
+    switch (priority) {
+      case "haute":
+        return <Badge variant="destructive">Haute</Badge>;
+      case "moyenne":
+        return <Badge variant="secondary" className="bg-orange-500/80 border-orange-500/20 text-white">Moyenne</Badge>;
+      default:
+        return <Badge variant="outline">Basse</Badge>;
+    }
   };
+
+  const summaryData = [
+    { title: "Alertes Critiques", value: "2", icon: AlertTriangle, color: "text-destructive" },
+    { title: "En Attente", value: "6", icon: Clock, color: "text-orange-400" },
+    { title: "Traitées aujourd'hui", value: "4", icon: CheckCircle, color: "text-green-400" },
+  ];
 
   return (
     <div className="space-y-6">
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="bg-gradient-to-br from-red-600/20 to-red-800/20 border-red-500/30 backdrop-blur-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-red-400">Alertes Critiques</p>
-                <p className="text-2xl font-bold text-white">2</p>
+        {summaryData.map(item => (
+          <Card key={item.title}>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">{item.title}</p>
+                  <p className={`text-3xl font-bold ${item.color}`}>{item.value}</p>
+                </div>
+                <item.icon className={`h-8 w-8 ${item.color}`} />
               </div>
-              <AlertTriangle className="h-8 w-8 text-red-400" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-orange-600/20 to-orange-800/20 border-orange-500/30 backdrop-blur-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-orange-400">En Attente</p>
-                <p className="text-2xl font-bold text-white">6</p>
-              </div>
-              <Clock className="h-8 w-8 text-orange-400" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-blue-600/20 to-blue-800/20 border-blue-500/30 backdrop-blur-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-blue-400">Traitées aujourd'hui</p>
-                <p className="text-2xl font-bold text-white">4</p>
-              </div>
-              <FileX className="h-8 w-8 text-blue-400" />
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       {/* Alerts List */}
-      <Card className="bg-black/40 border-slate-700/50 backdrop-blur-sm">
+      <Card>
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2 text-white font-bold tracking-wide">
-            <AlertTriangle className="h-5 w-5 text-orange-400" />
+          <CardTitle className="flex items-center space-x-2 text-foreground font-bold tracking-wide">
+            <AlertTriangle className="h-5 w-5 text-primary" />
             <span>ALERTES ACTIVES</span>
           </CardTitle>
         </CardHeader>
@@ -128,30 +107,26 @@ const AlertsPanel = () => {
             {alerts.map((alert) => (
               <div
                 key={alert.id}
-                className="flex items-start space-x-4 p-4 border border-slate-700/50 rounded-lg hover:bg-slate-800/30 transition-colors backdrop-blur-sm"
+                className="flex items-start space-x-4 p-4 border border-border rounded-lg hover:bg-accent transition-colors"
               >
-                <div className="flex-shrink-0 p-2 bg-slate-800/50 rounded-full border border-slate-600/30">
+                <div className="flex-shrink-0 mt-1 p-2 bg-background rounded-full">
                   {getAlertIcon(alert.type)}
                 </div>
                 
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between">
+                  <div className="flex items-start justify-between flex-wrap gap-2">
                     <div className="flex-1">
-                      <h4 className="font-semibold text-white">{alert.title}</h4>
-                      <p className="text-sm text-slate-300 mt-1">{alert.description}</p>
+                      <h4 className="font-semibold text-foreground">{alert.title}</h4>
+                      <p className="text-sm text-muted-foreground mt-1">{alert.description}</p>
                       <div className="flex items-center space-x-4 mt-2">
-                        <span className="text-sm text-slate-400">Client: {alert.client}</span>
-                        <span className="text-sm text-slate-500">•</span>
-                        <span className="text-sm text-slate-400">Échéance: {alert.delai}</span>
+                        <span className="text-sm text-muted-foreground">Client: {alert.client}</span>
+                        <span className="text-sm text-muted-foreground">•</span>
+                        <span className="text-sm text-muted-foreground">Échéance: {alert.delai}</span>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-2 ml-4">
+                    <div className="flex items-center space-x-2 ml-4 flex-shrink-0">
                       {getPriorityBadge(alert.priority)}
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        className="border-orange-500/30 text-orange-400 hover:bg-orange-500/20 hover:text-orange-300"
-                      >
+                      <Button variant="outline" size="sm">
                         Traiter
                       </Button>
                     </div>
