@@ -153,6 +153,14 @@ const CreateContractDialog = ({ open, onOpenChange, onContractCreated }: CreateC
                       <SelectItem value="credit_auto">Crédit Auto</SelectItem>
                       <SelectItem value="decouvert_autorise">Découvert Autorisé</SelectItem>
                       <SelectItem value="pret_personnel">Prêt Personnel</SelectItem>
+                      <SelectItem value="ligne_credit">Ligne de crédit</SelectItem>
+                      <SelectItem value="augmentation_ligne_credit">Augmentation d'une ligne de crédit</SelectItem>
+                      <SelectItem value="diminution_ligne_credit">Diminution d'une ligne de crédit</SelectItem>
+                      <SelectItem value="operation_ponctuelle">Opération ponctuelle</SelectItem>
+                      <SelectItem value="financement_devises">Financement en devises</SelectItem>
+                      <SelectItem value="cmt">CMT</SelectItem>
+                      <SelectItem value="clt">CLT</SelectItem>
+                      <SelectItem value="cct">CCT</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
