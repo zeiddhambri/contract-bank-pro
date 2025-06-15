@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -36,6 +35,7 @@ const formSchema = z.object({
   client: z.string().min(1, "Le nom du client est requis"),
   type: z.string().min(1, "Le type de contrat est requis"),
   montant: z.number().min(0, "Le montant doit être positif"),
+  currency: z.string().min(1, "La devise est requise"),
   garantie: z.string().min(1, "La garantie est requise"),
   agence: z.string().min(1, "L'agence est requise"),
   description: z.string().optional(),
@@ -57,6 +57,7 @@ const CreateContractDialog = ({ open, onOpenChange, onContractCreated }: CreateC
       client: "",
       type: "",
       montant: 0,
+      currency: "EUR",
       garantie: "",
       agence: "",
       description: "",
@@ -71,6 +72,7 @@ const CreateContractDialog = ({ open, onOpenChange, onContractCreated }: CreateC
         client: data.client,
         type: data.type,
         montant: data.montant,
+        currency: data.currency,
         garantie: data.garantie,
         agence: data.agence,
         description: data.description || "",
@@ -157,24 +159,48 @@ const CreateContractDialog = ({ open, onOpenChange, onContractCreated }: CreateC
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="montant"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Montant (€)</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      placeholder="0"
-                      {...field}
-                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="montant"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Montant</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        placeholder="0"
+                        {...field}
+                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="currency"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Devise</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Devise" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="EUR">Euro (€)</SelectItem>
+                        <SelectItem value="USD">Dollar ($)</SelectItem>
+                        <SelectItem value="TND">Dinar Tunisien (TND)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
             <FormField
               control={form.control}
               name="garantie"

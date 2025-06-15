@@ -44,6 +44,22 @@ const ContractList = ({ onRefresh }: ContractListProps) => {
     fetchContracts();
   }, [onRefresh]);
 
+  const formatCurrency = (amount: number, currency: string) => {
+    const currencySymbols = {
+      EUR: '€',
+      USD: '$',
+      TND: 'TND'
+    };
+    
+    const symbol = currencySymbols[currency as keyof typeof currencySymbols] || currency;
+    
+    return new Intl.NumberFormat('fr-FR', {
+      style: 'decimal',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(amount) + ' ' + symbol;
+  };
+
   const getStatusBadge = (status: string) => {
     const statusConfig = {
       en_cours: { label: "En cours", color: "bg-blue-600/20 text-blue-400 border-blue-500/30" },
@@ -125,13 +141,6 @@ const ContractList = ({ onRefresh }: ContractListProps) => {
     return new Date(dateString).toLocaleDateString('fr-FR');
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'EUR'
-    }).format(amount);
-  };
-
   if (isLoading) {
     return (
       <Card className="bg-black/40 border-slate-700/50 backdrop-blur-sm">
@@ -205,7 +214,9 @@ const ContractList = ({ onRefresh }: ContractListProps) => {
                       {getTypeLabel(contract.type)}
                     </Badge>
                   </TableCell>
-                  <TableCell className="font-semibold text-orange-400">{formatCurrency(contract.montant)}</TableCell>
+                  <TableCell className="font-semibold text-orange-400">
+                    {formatCurrency(contract.montant, contract.currency || 'EUR')}
+                  </TableCell>
                   <TableCell className="text-slate-300">{getGarantieLabel(contract.garantie)}</TableCell>
                   <TableCell>{getStatusBadge(contract.statut)}</TableCell>
                   <TableCell className="text-slate-300">{getAgenceLabel(contract.agence)}</TableCell>
