@@ -36,7 +36,7 @@ import { Trash2 } from "lucide-react";
 const guaranteeSchema = z.object({
   type: z.string().min(1, "Le type de garantie est requis"),
   hypotheque_type: z.string().optional(),
-  numero_titre: z.string().optional(),
+  details: z.string().optional(),
 });
 
 const formSchema = z.object({
@@ -51,19 +51,21 @@ const formSchema = z.object({
   description: z.string().optional(),
 }).superRefine((data, ctx) => {
   data.garanties.forEach((g, index) => {
-    if (g.type === "hypotheque" && !g.hypotheque_type) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Champs requis",
-        path: [`garanties`, index, `hypotheque_type`],
-      });
-    }
-    if (g.hypotheque_type === "numero_titre" && (!g.numero_titre || g.numero_titre.trim() === '')) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Champs requis",
-        path: [`garanties`, index, `numero_titre`],
-      });
+    if (g.type === "hypotheque") {
+      if (!g.hypotheque_type) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Champs requis",
+          path: [`garanties`, index, `hypotheque_type`],
+        });
+      }
+      if (!g.details || g.details.trim() === '') {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Détails requis pour l'hypothèque",
+          path: [`garanties`, index, `details`],
+        });
+      }
     }
   });
 });
@@ -85,7 +87,7 @@ const CreateContractDialog = ({ open, onOpenChange, onContractCreated }: CreateC
       type: "",
       montant: 0,
       currency: "EUR",
-      garanties: [{ type: "", hypotheque_type: "", numero_titre: "" }],
+      garanties: [{ type: "", hypotheque_type: "", details: "" }],
       agence: "",
       description: "",
     },
@@ -103,12 +105,10 @@ const CreateContractDialog = ({ open, onOpenChange, onContractCreated }: CreateC
     
     try {
       const cleanedGaranties = data.garanties.map(g => {
-        const newG: {type: string; hypotheque_type?: string; numero_titre?: string} = { type: g.type };
+        const newG: {type: string; hypotheque_type?: string; details?: string} = { type: g.type };
         if (g.type === 'hypotheque') {
             newG.hypotheque_type = g.hypotheque_type;
-            if (g.hypotheque_type === 'numero_titre') {
-                newG.numero_titre = g.numero_titre;
-            }
+            newG.details = g.details;
         }
         return newG;
       });
@@ -275,7 +275,7 @@ const CreateContractDialog = ({ open, onOpenChange, onContractCreated }: CreateC
                           name={`garanties.${index}.hypotheque_type`}
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel className="text-xs">Détails Hypothèque</FormLabel>
+                              <FormLabel className="text-xs">Type d'hypothèque</FormLabel>
                               <Select onValueChange={field.onChange} defaultValue={field.value}>
                                 <FormControl>
                                   <SelectTrigger>
@@ -292,21 +292,19 @@ const CreateContractDialog = ({ open, onOpenChange, onContractCreated }: CreateC
                             </FormItem>
                           )}
                         />
-                        {watchedGaranties[index]?.hypotheque_type === 'numero_titre' && (
-                           <FormField
-                            control={form.control}
-                            name={`garanties.${index}.numero_titre`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel className="text-xs">N° de titre foncier</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="Entrez le numéro de titre" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        )}
+                        <FormField
+                          control={form.control}
+                          name={`garanties.${index}.details`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-xs">Détails</FormLabel>
+                              <FormControl>
+                                <Textarea placeholder="Entrez les détails de l'hypothèque..." {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
                       </>
                     )}
                     
@@ -330,7 +328,7 @@ const CreateContractDialog = ({ open, onOpenChange, onContractCreated }: CreateC
                   variant="outline"
                   size="sm"
                   className="mt-2"
-                  onClick={() => append({ type: "", hypotheque_type: "", numero_titre: "" })}
+                  onClick={() => append({ type: "", hypotheque_type: "", details: "" })}
                 >
                   Ajouter une garantie
                 </Button>
