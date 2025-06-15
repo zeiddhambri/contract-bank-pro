@@ -21,7 +21,8 @@ const Index = () => {
       case "dashboard":
         return <DashboardStats />;
       case "contracts":
-        return <ContractList onRefresh={contractsRefreshTrigger} />;
+        // Correction : enlever la prop onRefresh, qui n'existe pas
+        return <ContractList />;
       case "alerts":
         return <AlertsPanel />;
       default:
