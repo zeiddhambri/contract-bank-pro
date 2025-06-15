@@ -18,6 +18,7 @@ export type Database = {
           date_signature: string | null
           description: string | null
           garantie: string
+          garanties: Json
           id: string
           montant: number
           reference_decision: string
@@ -33,6 +34,7 @@ export type Database = {
           date_signature?: string | null
           description?: string | null
           garantie: string
+          garanties?: Json
           id?: string
           montant: number
           reference_decision: string
@@ -48,6 +50,7 @@ export type Database = {
           date_signature?: string | null
           description?: string | null
           garantie?: string
+          garanties?: Json
           id?: string
           montant?: number
           reference_decision?: string
