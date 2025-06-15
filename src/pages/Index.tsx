@@ -48,7 +48,7 @@ const Index = () => {
       {/* Navigation Tabs */}
       <nav className="border-b">
         <div className="px-6">
-          <div className="flex space-x-8 bg-blue-100">
+          <div className="flex space-x-8 bg-blue-100 rounded-md">
             {[{
             id: "dashboard",
             label: "Tableau de Bord"
