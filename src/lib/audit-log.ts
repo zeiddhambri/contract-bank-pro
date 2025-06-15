@@ -1,7 +1,8 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { Json } from "@/integrations/supabase/types";
 
-export const logAction = async (action: string, details?: object) => {
+export const logAction = async (action: string, details?: Json) => {
     try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) {
