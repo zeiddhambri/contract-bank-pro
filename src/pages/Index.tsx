@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -12,20 +13,18 @@ import { useAuth } from "@/contexts/AuthContext";
 import UserNav from "@/components/UserNav";
 import AiAssistantSheet from "@/components/AiAssistantSheet";
 import { MessageCircle } from "lucide-react";
+
 const Index = () => {
-  const {
-    t
-  } = useTranslation();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState("dashboard");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [contractsRefreshTrigger, setContractsRefreshTrigger] = useState(0);
-  const {
-    user,
-    bank
-  } = useAuth();
+  const { user, bank } = useAuth();
+
   const handleContractCreated = () => {
     setContractsRefreshTrigger(prev => prev + 1);
   };
+
   const renderContent = () => {
     switch (activeTab) {
       case "dashboard":
@@ -39,25 +38,26 @@ const Index = () => {
     }
   };
   const [aiAssistantOpen, setAiAssistantOpen] = useState(false);
-  return <div className="min-h-screen bg-background text-foreground">
+
+  return (
+    <div className="min-h-screen text-foreground">
       {/* Header */}
-      <header className="border-b sticky top-0 z-40 bg-background/95 backdrop-blur-sm">
-        <div style={{
-        backgroundColor: bank?.primary_color || '#14b8a6'
-      }} className="flex h-16 items-center justify-between px-6 text-white bg-sky-950">
+      <header className="border-b border-border/40 sticky top-0 z-40 bg-background/95 backdrop-blur-sm">
+        <div className="flex h-16 items-center justify-between px-6">
           <div className="flex items-center space-x-4">
             <BankLogo logoUrl={bank?.logo_url} bankName={bank?.name} />
-            <h1 className="text-xl font-bold text-orange-600">
+            <h1 className="text-xl font-bold text-foreground">
               {bank?.name || t('contractManager')}
             </h1>
           </div>
           <div className="flex items-center space-x-4">
-            {user && <Button onClick={() => setIsCreateDialogOpen(true)} variant="secondary">
+            {user && (
+              <Button onClick={() => setIsCreateDialogOpen(true)}>
                 <Plus className="h-4 w-4 mr-2" />
                 <span>{t('newContract')}</span>
-              </Button>}
-            {/* Ajout du bouton Assistant IA */}
-            <Button variant="secondary" size="icon" onClick={() => setAiAssistantOpen(true)} className="rounded-full" aria-label="Ouvrir l'assistant IA">
+              </Button>
+            )}
+            <Button variant="outline" size="icon" onClick={() => setAiAssistantOpen(true)} className="rounded-full" aria-label="Ouvrir l'assistant IA">
               <MessageCircle />
             </Button>
             <LanguageSwitcher />
@@ -66,21 +66,26 @@ const Index = () => {
         </div>
       </header>
       {/* Navigation Tabs */}
-      <nav className="border-b">
+      <nav className="border-b border-border/40">
         <div className="px-6">
-          <div className="flex space-x-8 rounded-md bg-sky-900">
-            {[{
-            id: "dashboard",
-            label: t("dashboard")
-          }, {
-            id: "contracts",
-            label: t("contracts")
-          }, {
-            id: "alerts",
-            label: t("alerts")
-          }].map(tab => <button key={tab.id} onClick={() => setActiveTab(tab.id)} className="text-orange-600">
+          <div className="flex space-x-8">
+            {[
+              { id: "dashboard", label: t("dashboard") },
+              { id: "contracts", label: t("contracts") },
+              { id: "alerts", label: t("alerts") },
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors
+                  ${activeTab === tab.id
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-muted-foreground hover:text-foreground'
+                  }`}
+              >
                 {tab.label}
-              </button>)}
+              </button>
+            ))}
           </div>
         </div>
       </nav>
@@ -94,6 +99,7 @@ const Index = () => {
       <CreateContractDialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen} onContractCreated={handleContractCreated} />
       {/* Assistant IA Panel */}
       <AiAssistantSheet open={aiAssistantOpen} onOpenChange={setAiAssistantOpen} />
-    </div>;
+    </div>
+  );
 };
 export default Index;
