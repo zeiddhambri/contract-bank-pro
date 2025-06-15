@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -13,13 +12,17 @@ import { useAuth } from "@/contexts/AuthContext";
 import UserNav from "@/components/UserNav";
 import AiAssistantSheet from "@/components/AiAssistantSheet";
 import { MessageCircle } from "lucide-react";
-
 const Index = () => {
-  const { t } = useTranslation();
+  const {
+    t
+  } = useTranslation();
   const [activeTab, setActiveTab] = useState("dashboard");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [contractsRefreshTrigger, setContractsRefreshTrigger] = useState(0);
-  const { user, bank } = useAuth();
+  const {
+    user,
+    bank
+  } = useAuth();
   const handleContractCreated = () => {
     setContractsRefreshTrigger(prev => prev + 1);
   };
@@ -36,36 +39,25 @@ const Index = () => {
     }
   };
   const [aiAssistantOpen, setAiAssistantOpen] = useState(false);
-
-  return (
-    <div className="min-h-screen bg-background text-foreground">
+  return <div className="min-h-screen bg-background text-foreground">
       {/* Header */}
       <header className="border-b sticky top-0 z-40 bg-background/95 backdrop-blur-sm">
-        <div 
-          className="flex h-16 items-center justify-between px-6 text-white"
-          style={{ backgroundColor: bank?.primary_color || '#14b8a6' }}
-        >
+        <div style={{
+        backgroundColor: bank?.primary_color || '#14b8a6'
+      }} className="flex h-16 items-center justify-between px-6 text-white bg-sky-950">
           <div className="flex items-center space-x-4">
             <BankLogo logoUrl={bank?.logo_url} bankName={bank?.name} />
-            <h1 className="text-xl font-bold">
+            <h1 className="text-xl font-bold text-orange-600">
               {bank?.name || t('contractManager')}
             </h1>
           </div>
           <div className="flex items-center space-x-4">
-            {user && (
-              <Button onClick={() => setIsCreateDialogOpen(true)} variant="secondary">
+            {user && <Button onClick={() => setIsCreateDialogOpen(true)} variant="secondary">
                 <Plus className="h-4 w-4 mr-2" />
                 <span>{t('newContract')}</span>
-              </Button>
-            )}
+              </Button>}
             {/* Ajout du bouton Assistant IA */}
-            <Button
-              variant="secondary"
-              size="icon"
-              onClick={() => setAiAssistantOpen(true)}
-              className="rounded-full"
-              aria-label="Ouvrir l'assistant IA"
-            >
+            <Button variant="secondary" size="icon" onClick={() => setAiAssistantOpen(true)} className="rounded-full" aria-label="Ouvrir l'assistant IA">
               <MessageCircle />
             </Button>
             <LanguageSwitcher />
@@ -76,7 +68,7 @@ const Index = () => {
       {/* Navigation Tabs */}
       <nav className="border-b">
         <div className="px-6">
-          <div className="flex space-x-8 bg-blue-100 rounded-md">
+          <div className="flex space-x-8 rounded-md bg-sky-900">
             {[{
             id: "dashboard",
             label: t("dashboard")
@@ -86,7 +78,7 @@ const Index = () => {
           }, {
             id: "alerts",
             label: t("alerts")
-          }].map(tab => <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`py-4 px-2 border-b-2 font-medium text-sm transition-colors ${activeTab === tab.id ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"}`}>
+          }].map(tab => <button key={tab.id} onClick={() => setActiveTab(tab.id)} className="text-orange-600">
                 {tab.label}
               </button>)}
           </div>
@@ -102,8 +94,6 @@ const Index = () => {
       <CreateContractDialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen} onContractCreated={handleContractCreated} />
       {/* Assistant IA Panel */}
       <AiAssistantSheet open={aiAssistantOpen} onOpenChange={setAiAssistantOpen} />
-    </div>
-  );
+    </div>;
 };
-
 export default Index;

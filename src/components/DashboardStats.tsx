@@ -36,8 +36,8 @@ const KpiCard = ({
   icon: React.ElementType;
   color: string;
 }) => <Card>
-    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-teal-200 rounded-md">
-      <CardTitle className="text-sm font-medium">{title}</CardTitle>
+    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 rounded-md bg-sky-950">
+      <CardTitle className="text-sm font-medium text-orange-600">{title}</CardTitle>
       <Icon className={`h-4 w-4 text-muted-foreground ${color}`} />
     </CardHeader>
     <CardContent>
@@ -155,8 +155,8 @@ const DashboardStats = () => {
       </div>
       <div className="lg:col-span-2">
         <Card>
-          <CardHeader>
-            <CardTitle>Répartition par Statut</CardTitle>
+          <CardHeader className="bg-sky-950">
+            <CardTitle className="text-orange-600">Répartition par Statut</CardTitle>
           </CardHeader>
           <CardContent className="h-[350px]">
             <ResponsiveContainer width="100%" height="100%">
