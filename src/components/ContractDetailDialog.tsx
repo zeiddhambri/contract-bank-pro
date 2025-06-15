@@ -87,6 +87,9 @@ const ContractDetailDialog: React.FC<ContractDetailDialogProps> = ({
   
   const getChangedFields = () => {
     const changes: Partial<TablesUpdate<'contracts'>> = {};
+    if (editedContract.reference_decision !== contract.reference_decision) {
+      changes.reference_decision = editedContract.reference_decision;
+    }
     if (editedContract.client !== contract.client) {
       changes.client = editedContract.client;
     }
@@ -142,7 +145,7 @@ const ContractDetailDialog: React.FC<ContractDetailDialogProps> = ({
       setIsUploading(false);
     }
 
-    if (Object.keys(updates).length > 0) {
+    if (Object.keys(updates).length > 0 || (file && updates.file_path)) {
       await onSaveChanges(contract.id, updates);
     }
     
@@ -174,8 +177,8 @@ const ContractDetailDialog: React.FC<ContractDetailDialogProps> = ({
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div>
-            <div className="text-xs text-muted-foreground">Référence</div>
-            <div className="font-bold">{contract.reference_decision}</div>
+            <Label htmlFor="reference_decision" className="text-xs text-muted-foreground">Référence</Label>
+            <Input id="reference_decision" value={editedContract.reference_decision} onChange={(e) => handleFieldChange('reference_decision', e.target.value)} />
           </div>
           <div>
             <Label htmlFor="client" className="text-xs text-muted-foreground">Client</Label>
