@@ -1,7 +1,7 @@
+
 import React from "react";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -31,46 +31,8 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import ContractTypeSelect from "./ContractTypeSelect";
-import { Trash2 } from "lucide-react";
-
-const guaranteeSchema = z.object({
-  type: z.string().min(1, "Le type de garantie est requis"),
-  hypotheque_type: z.string().optional(),
-  details: z.string().optional(),
-});
-
-const formSchema = z.object({
-  client: z.string().min(1, "Le nom du client est requis"),
-  type: z.string().min(1, "Le type de contrat est requis"),
-  montant: z.number().min(0, "Le montant doit être positif"),
-  currency: z.string().min(1, "La devise est requise"),
-  garanties: z.array(guaranteeSchema)
-    .min(1, "Au moins une garantie est requise.")
-    .max(4, "Maximum 4 garanties."),
-  agence: z.string().min(1, "L'agence est requise"),
-  description: z.string().optional(),
-}).superRefine((data, ctx) => {
-  data.garanties.forEach((g, index) => {
-    if (g.type === "hypotheque") {
-      if (!g.hypotheque_type) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "Champs requis",
-          path: [`garanties`, index, `hypotheque_type`],
-        });
-      }
-      if (!g.details || g.details.trim() === '') {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "Détails requis pour l'hypothèque",
-          path: [`garanties`, index, `details`],
-        });
-      }
-    }
-  });
-});
-
-type FormData = z.infer<typeof formSchema>;
+import { contractFormSchema, ContractFormData } from "@/lib/contractFormSchema";
+import GuaranteesFormSection from "./GuaranteesFormSection";
 
 interface CreateContractDialogProps {
   open: boolean;
@@ -80,8 +42,8 @@ interface CreateContractDialogProps {
 
 const CreateContractDialog = ({ open, onOpenChange, onContractCreated }: CreateContractDialogProps) => {
   const { toast } = useToast();
-  const form = useForm<FormData>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<ContractFormData>({
+    resolver: zodResolver(contractFormSchema),
     defaultValues: {
       client: "",
       type: "",
@@ -93,14 +55,7 @@ const CreateContractDialog = ({ open, onOpenChange, onContractCreated }: CreateC
     },
   });
 
-  const { fields, append, remove } = useFieldArray({
-    control: form.control,
-    name: "garanties",
-  });
-
-  const watchedGaranties = form.watch("garanties");
-
-  const onSubmit = async (data: FormData) => {
+  const onSubmit = async (data: ContractFormData) => {
     console.log("Submitting contract data:", data);
     
     try {
@@ -239,105 +194,7 @@ const CreateContractDialog = ({ open, onOpenChange, onContractCreated }: CreateC
                 />
               </div>
               
-              <div>
-                <FormLabel>Garanties</FormLabel>
-                <div className="space-y-4 pt-2">
-                  {fields.map((item, index) => (
-                    <div key={item.id} className="p-3 border rounded-lg space-y-3 relative bg-slate-800/50 border-slate-700">
-                      <FormField
-                        control={form.control}
-                        name={`garanties.${index}.type`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-xs">Type de Garantie {index + 1}</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Sélectionnez la garantie" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="hypotheque">Hypothèque</SelectItem>
-                                <SelectItem value="caution">Caution</SelectItem>
-                                <SelectItem value="nantissement">Nantissement</SelectItem>
-                                <SelectItem value="gage">Gage</SelectItem>
-                                <SelectItem value="aucune">Aucune</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      {watchedGaranties[index]?.type === 'hypotheque' && (
-                        <>
-                          <FormField
-                            control={form.control}
-                            name={`garanties.${index}.hypotheque_type`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel className="text-xs">Type d'hypothèque</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                  <FormControl>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Sélectionnez le type" />
-                                    </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                    <SelectItem value="numero_titre">N° titre</SelectItem>
-                                    <SelectItem value="non_immatricule">Immeuble non immatriculé</SelectItem>
-                                    <SelectItem value="en_cours_immatriculation">En cours d'immatriculation</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name={`garanties.${index}.details`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel className="text-xs">Détails</FormLabel>
-                                <FormControl>
-                                  <Textarea placeholder="Entrez les détails de l'hypothèque..." {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </>
-                      )}
-                      
-                      {fields.length > 1 && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="absolute top-1 right-1 h-7 w-7"
-                          onClick={() => remove(index)}
-                        >
-                          <Trash2 className="h-4 w-4 text-red-500" />
-                        </Button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-                {fields.length < 4 && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="mt-2"
-                    onClick={() => append({ type: "", hypotheque_type: "", details: "" })}
-                  >
-                    Ajouter une garantie
-                  </Button>
-                )}
-                 <FormMessage>
-                  {form.formState.errors.garanties?.root?.message}
-                </FormMessage>
-              </div>
+              <GuaranteesFormSection form={form} />
 
               <FormField
                 control={form.control}
