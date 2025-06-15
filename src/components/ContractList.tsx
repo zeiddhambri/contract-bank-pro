@@ -1,7 +1,6 @@
-
 import React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { createClient } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import ContractTable from "./ContractTable";
 
@@ -35,8 +34,6 @@ function formatDate(dateString: string) {
 function formatCurrency(amount: number) {
   return `${amount.toLocaleString("fr-FR")} MAD`;
 }
-
-const supabase = createClient();
 
 const fetchContracts = async () => {
   let { data, error } = await supabase
