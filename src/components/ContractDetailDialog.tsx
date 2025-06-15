@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import {
   Dialog,
@@ -9,12 +10,13 @@ import {
 import { Button } from "@/components/ui/button";
 import ContractStatusSelect from "./ContractStatusSelect";
 import { toast } from "@/hooks/use-toast";
-import { AlertTriangle, Download } from "lucide-react";
+import { AlertTriangle, Download, Paperclip } from "lucide-react";
 import { Tables, TablesUpdate } from "@/integrations/supabase/types";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { AGENCE_LABELS } from "@/lib/contract-helpers";
 import { supabase } from "@/integrations/supabase/client";
+import JSZip from "jszip";
 
 const ALERT_TYPES = [
   {
@@ -60,15 +62,27 @@ const ContractDetailDialog: React.FC<ContractDetailDialogProps> = ({
 }) => {
   const [editedContract, setEditedContract] = useState(contract);
   const [selectedAlert, setSelectedAlert] = useState(ALERT_TYPES[0].value);
+  const [file, setFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   React.useEffect(() => {
     if (open) {
       setEditedContract(contract);
+      setFile(null);
+      setIsUploading(false);
     }
   }, [contract, open]);
 
   const handleFieldChange = (field: keyof TablesUpdate<'contracts'>, value: any) => {
     setEditedContract(prev => ({ ...prev, [field]: value as any }));
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setFile(e.target.files[0]);
+    } else {
+      setFile(null);
+    }
   };
   
   const getChangedFields = () => {
@@ -92,11 +106,46 @@ const ContractDetailDialog: React.FC<ContractDetailDialogProps> = ({
   };
   
   const changedFields = getChangedFields();
-  const hasChanges = Object.keys(changedFields).length > 0;
+  const hasChanges = Object.keys(changedFields).length > 0 || !!file;
 
   const handleSave = async () => {
-    if (!hasChanges) return;
-    await onSaveChanges(contract.id, changedFields);
+    if (!hasChanges || isUploading) return;
+
+    const updates = getChangedFields();
+
+    if (file) {
+      setIsUploading(true);
+      try {
+        const zip = new JSZip();
+        zip.file(file.name, file);
+        const zippedBlob = await zip.generateAsync({ type: "blob" });
+        const fileName = `${file.name}.zip`;
+        const newFilePath = `${Date.now()}-${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('contract_files')
+          .upload(newFilePath, zippedBlob);
+
+        if (uploadError) {
+          throw uploadError;
+        }
+        updates.file_path = newFilePath;
+      } catch (error: any) {
+        toast({
+          title: "Erreur de téléversement",
+          description: error.message,
+          variant: "destructive",
+        });
+        setIsUploading(false);
+        return;
+      }
+      setIsUploading(false);
+    }
+
+    if (Object.keys(updates).length > 0) {
+      await onSaveChanges(contract.id, updates);
+    }
+    
     onOpenChange(false);
   };
 
@@ -156,17 +205,38 @@ const ContractDetailDialog: React.FC<ContractDetailDialogProps> = ({
               onChange={(v) => handleFieldChange('statut', v)}
             />
           </div>
-          {contract.file_path && (
-            <div>
-              <Label className="text-xs text-muted-foreground">Fichier</Label>
+          <div>
+            <Label className="text-xs text-muted-foreground">Fichier contractuel</Label>
+            {contract.file_path && (
               <Button asChild variant="outline" className="mt-1 w-full justify-start">
                 <a href={getFileUrl(contract.file_path)} target="_blank" rel="noopener noreferrer">
                   <Download className="mr-2 h-4 w-4" />
-                  Télécharger le fichier zippé
+                  Télécharger le fichier actuel
                 </a>
               </Button>
+            )}
+            <div className="mt-2 space-y-1">
+              <Label htmlFor="file-upload" className="text-sm font-medium sr-only">
+                {contract.file_path ? "Remplacer le fichier" : "Ajouter un fichier"}
+              </Label>
+              <Input
+                id="file-upload"
+                type="file"
+                onChange={handleFileChange}
+                disabled={isUploading}
+              />
+              {file && (
+                <p className="text-sm text-muted-foreground flex items-center pt-1">
+                  <Paperclip className="h-4 w-4 mr-2" /> {file.name}
+                </p>
+              )}
+               {contract.file_path && (
+                  <p className="text-xs text-muted-foreground pt-1">
+                      {file ? 'Le nouveau fichier remplacera l\'ancien lors de la sauvegarde.' : 'Vous pouvez remplacer le fichier existant.'}
+                  </p>
+              )}
             </div>
-          )}
+          </div>
           <div>
             <div className="text-xs text-muted-foreground mb-1">Type d’alerte</div>
             <select
@@ -195,9 +265,9 @@ const ContractDetailDialog: React.FC<ContractDetailDialogProps> = ({
           <div className="flex-1" />
           <Button
             onClick={handleSave}
-            disabled={isSaving || !hasChanges}
+            disabled={isSaving || !hasChanges || isUploading}
           >
-            Sauvegarder
+            {isUploading ? "Téléversement..." : "Sauvegarder"}
           </Button>
         </DialogFooter>
       </DialogContent>
