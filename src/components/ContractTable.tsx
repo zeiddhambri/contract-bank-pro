@@ -1,4 +1,8 @@
+
 import React, { useState } from "react";
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 import {
   Table,
   TableBody,
@@ -17,9 +21,10 @@ import {
   getAgenceLabel,
   getGarantieLabel,
   getTypeLabel,
+  CONTRACT_STATUS_OPTIONS,
 } from "@/lib/contract-helpers";
 import { Tables, TablesUpdate } from "@/integrations/supabase/types";
-import { Paperclip, Trash2 } from "lucide-react";
+import { Download, Paperclip, Trash2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -61,6 +66,58 @@ const ContractTable: React.FC<ContractTableProps> = ({
     return data.publicUrl;
   };
 
+  const getStatusLabel = (statusValue: string) => {
+    return CONTRACT_STATUS_OPTIONS.find(opt => opt.value === statusValue)?.label || statusValue;
+  }
+
+  const handleExportExcel = () => {
+    const dataToExport = contracts.map(c => ({
+      "Référence Décision": c.reference_decision,
+      "Client": c.client,
+      "Type": getTypeLabel(c.type),
+      "Montant": c.montant,
+      "Garantie": getGarantieLabel(c.garantie),
+      "Statut": getStatusLabel(c.statut),
+      "Agence": getAgenceLabel(c.agence),
+      "Date décision": formatDate(c.date_decision),
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Contrats");
+    XLSX.writeFile(workbook, "contrats.xlsx");
+  };
+
+  const handleExportPDF = () => {
+    const doc = new jsPDF();
+    const tableColumn = ["Référence Décision", "Client", "Type", "Montant", "Garantie", "Statut", "Agence", "Date décision"];
+    const tableRows: (string | number)[][] = [];
+
+    contracts.forEach(c => {
+      const contractData = [
+        c.reference_decision,
+        c.client,
+        getTypeLabel(c.type),
+        formatCurrency(c.montant),
+        getGarantieLabel(c.garantie),
+        getStatusLabel(c.statut),
+        getAgenceLabel(c.agence),
+        formatDate(c.date_decision),
+      ];
+      tableRows.push(contractData);
+    });
+
+    (doc as any).autoTable({
+        head: [tableColumn],
+        body: tableRows,
+        startY: 20,
+        styles: { font: "helvetica", fontSize: 8 },
+        headStyles: { fillColor: [22, 160, 133] },
+    });
+    doc.text("Liste des Contrats", 14, 15);
+    doc.save("contrats.pdf");
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -70,6 +127,16 @@ const ContractTable: React.FC<ContractTableProps> = ({
   }
   return (
     <>
+      <div className="flex justify-end gap-2 mb-4">
+        <Button onClick={handleExportExcel} variant="outline" size="sm">
+          <Download className="mr-2 h-4 w-4" />
+          Export Excel
+        </Button>
+        <Button onClick={handleExportPDF} variant="outline" size="sm">
+          <Download className="mr-2 h-4 w-4" />
+          Export PDF
+        </Button>
+      </div>
       <div className="overflow-x-auto rounded-lg border bg-card">
         <Table>
           <TableHeader>
