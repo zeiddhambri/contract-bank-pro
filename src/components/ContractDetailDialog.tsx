@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import {
   Dialog,
@@ -55,7 +54,6 @@ interface ContractDetailDialogProps {
   };
   onSaveStatus: (contractId: string, newStatus: string) => Promise<void>;
   statusLoading: boolean;
-  getStatusBadgeClass: (status: string) => string;
 }
 
 const ContractDetailDialog: React.FC<ContractDetailDialogProps> = ({
@@ -64,7 +62,6 @@ const ContractDetailDialog: React.FC<ContractDetailDialogProps> = ({
   contract,
   onSaveStatus,
   statusLoading,
-  getStatusBadgeClass,
 }) => {
   const [localStatus, setLocalStatus] = useState(contract.statut);
   const [selectedAlert, setSelectedAlert] = useState(ALERT_TYPES[0].value);
@@ -117,7 +114,6 @@ const ContractDetailDialog: React.FC<ContractDetailDialogProps> = ({
               value={localStatus}
               disabled={statusLoading}
               onChange={setLocalStatus}
-              getStatusBadgeClass={getStatusBadgeClass}
             />
           </div>
           {/* Menu déroulant d'alertes */}

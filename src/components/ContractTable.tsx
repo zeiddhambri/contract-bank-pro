@@ -12,6 +12,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import ContractStatusSelect from "./ContractStatusSelect";
 import ContractDetailDialog from "./ContractDetailDialog";
+import {
+  formatCurrency,
+  formatDate,
+  getAgenceLabel,
+  getGarantieLabel,
+  getTypeLabel,
+} from "@/lib/contract-helpers";
 
 interface Contract {
   id: string;
@@ -30,12 +37,6 @@ interface ContractTableProps {
   isLoading: boolean;
   statusLoadingId: string | null;
   handleStatusChange: (contractId: string, newStatus: string) => void;
-  getTypeLabel: (type: string) => string;
-  getGarantieLabel: (garantie: string) => string;
-  getStatusBadgeClass: (status: string) => string;
-  getAgenceLabel: (agence: string) => string;
-  formatDate: (dateString: string) => string;
-  formatCurrency: (amount: number) => string;
 }
 
 const ContractTable: React.FC<ContractTableProps> = ({
@@ -43,12 +44,6 @@ const ContractTable: React.FC<ContractTableProps> = ({
   isLoading,
   statusLoadingId,
   handleStatusChange,
-  getTypeLabel,
-  getGarantieLabel,
-  getStatusBadgeClass,
-  getAgenceLabel,
-  formatDate,
-  formatCurrency,
 }) => {
   const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -60,7 +55,7 @@ const ContractTable: React.FC<ContractTableProps> = ({
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center">
+      <div className="flex items-center justify-center p-8">
         <p className="text-slate-400">Chargement des contrats...</p>
       </div>
     );
@@ -101,7 +96,6 @@ const ContractTable: React.FC<ContractTableProps> = ({
                     value={contract.statut}
                     disabled={statusLoadingId === contract.id}
                     onChange={(v) => handleStatusChange(contract.id, v)}
-                    getStatusBadgeClass={getStatusBadgeClass}
                   />
                 </TableCell>
                 <TableCell className="text-slate-300">{getAgenceLabel(contract.agence)}</TableCell>
@@ -131,7 +125,6 @@ const ContractTable: React.FC<ContractTableProps> = ({
             handleStatusChange(id, newStatus);
           }}
           statusLoading={statusLoadingId === selectedContract.id}
-          getStatusBadgeClass={getStatusBadgeClass}
         />
       )}
     </>
