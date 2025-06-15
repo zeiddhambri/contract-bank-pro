@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -11,6 +10,8 @@ import Logo from "@/components/Logo";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useAuth } from "@/contexts/AuthContext";
 import UserNav from "@/components/UserNav";
+import AiAssistantSheet from "@/components/AiAssistantSheet";
+import { MessageCircle } from "lucide-react";
 
 const Index = () => {
   const { t } = useTranslation();
@@ -33,7 +34,10 @@ const Index = () => {
         return <DashboardStats />;
     }
   };
-  return <div className="min-h-screen bg-background text-foreground">
+  const [aiAssistantOpen, setAiAssistantOpen] = useState(false);
+
+  return (
+    <div className="min-h-screen bg-background text-foreground">
       {/* Header */}
       <header className="border-b sticky top-0 z-40 bg-background/95 backdrop-blur-sm">
         <div className="flex h-16 items-center justify-between px-6 bg-teal-500">
@@ -43,7 +47,6 @@ const Index = () => {
               {t('contractManager')}
             </h1>
           </div>
-          
           <div className="flex items-center space-x-4">
             {user && (
               <Button onClick={() => setIsCreateDialogOpen(true)}>
@@ -51,12 +54,21 @@ const Index = () => {
                 <span>{t('newContract')}</span>
               </Button>
             )}
+            {/* Ajout du bouton Assistant IA */}
+            <Button
+              variant="secondary"
+              size="icon"
+              onClick={() => setAiAssistantOpen(true)}
+              className="rounded-full"
+              aria-label="Ouvrir l'assistant IA"
+            >
+              <MessageCircle />
+            </Button>
             <LanguageSwitcher />
             <UserNav />
           </div>
         </div>
       </header>
-
       {/* Navigation Tabs */}
       <nav className="border-b">
         <div className="px-6">
@@ -82,8 +94,12 @@ const Index = () => {
         {renderContent()}
       </main>
 
-      {/* Create Contract Dialog */}
+      {/* Dialogue de création de contrat */}
       <CreateContractDialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen} onContractCreated={handleContractCreated} />
-    </div>;
+      {/* Assistant IA Panel */}
+      <AiAssistantSheet open={aiAssistantOpen} onOpenChange={setAiAssistantOpen} />
+    </div>
+  );
 };
+
 export default Index;
