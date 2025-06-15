@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import ContractStatusSelect from "./ContractStatusSelect";
 import { toast } from "@/hooks/use-toast";
 import { AlertTriangle } from "lucide-react";
-import { Tables } from "@/integrations/supabase/types";
+import { Tables, TablesUpdate } from "@/integrations/supabase/types";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { AGENCE_LABELS } from "@/lib/contract-helpers";
@@ -47,7 +47,7 @@ interface ContractDetailDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   contract: Tables<'contracts', 'Row'>;
-  onSaveChanges: (contractId: string, updates: Partial<Tables<'contracts', 'Update'>>) => Promise<void>;
+  onSaveChanges: (contractId: string, updates: Partial<TablesUpdate<'contracts'>>) => Promise<void>;
   isSaving: boolean;
 }
 
@@ -67,18 +67,27 @@ const ContractDetailDialog: React.FC<ContractDetailDialogProps> = ({
     }
   }, [contract, open]);
 
-  const handleFieldChange = (field: keyof Tables<'contracts', 'Update'>, value: any) => {
+  const handleFieldChange = (field: keyof TablesUpdate<'contracts'>, value: any) => {
     setEditedContract(prev => ({ ...prev, [field]: value }));
   };
   
   const getChangedFields = () => {
-    const changes: Partial<Tables<'contracts', 'Update'>> = {};
-    (Object.keys(editedContract) as Array<keyof typeof editedContract>).forEach(key => {
-      if (key in contract && editedContract[key] !== contract[key]) {
-        // @ts-ignore
-        changes[key] = editedContract[key];
-      }
-    });
+    const changes: Partial<TablesUpdate<'contracts'>> = {};
+    if (editedContract.client !== contract.client) {
+      changes.client = editedContract.client;
+    }
+    if (editedContract.montant !== contract.montant) {
+      changes.montant = editedContract.montant;
+    }
+    if (editedContract.date_decision !== contract.date_decision) {
+      changes.date_decision = editedContract.date_decision;
+    }
+    if (editedContract.agence !== contract.agence) {
+      changes.agence = editedContract.agence;
+    }
+    if (editedContract.statut !== contract.statut) {
+      changes.statut = editedContract.statut;
+    }
     return changes;
   };
   

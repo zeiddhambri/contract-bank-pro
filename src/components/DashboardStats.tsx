@@ -13,7 +13,7 @@ import {
   TrendingUp,
   ArrowDown,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PieChart, Pie, Cell } from "recharts";
 import {

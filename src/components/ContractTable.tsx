@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import {
   Table,
@@ -18,13 +19,13 @@ import {
   getGarantieLabel,
   getTypeLabel,
 } from "@/lib/contract-helpers";
-import { Tables } from "@/integrations/supabase/types";
+import { Tables, TablesUpdate } from "@/integrations/supabase/types";
 
 interface ContractTableProps {
   contracts: Tables<'contracts', 'Row'>[];
   isLoading: boolean;
   updatingContractId: string | null;
-  handleContractUpdate: (contractId: string, updates: Partial<Tables<'contracts', 'Row'>>) => Promise<void>;
+  handleContractUpdate: (contractId: string, updates: Partial<TablesUpdate<'contracts'>>) => Promise<void>;
 }
 
 const ContractTable: React.FC<ContractTableProps> = ({

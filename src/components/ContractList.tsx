@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import ContractTable from "./ContractTable";
-import { Tables } from "@/integrations/supabase/types";
+import { Tables, TablesUpdate } from "@/integrations/supabase/types";
 
 const fetchContracts = async () => {
   let { data, error } = await supabase
@@ -28,7 +28,7 @@ const ContractList: React.FC = () => {
       updates,
     }: {
       contractId: string;
-      updates: Partial<Tables<'contracts', 'Row'>>;
+      updates: Partial<TablesUpdate<'contracts'>>;
     }) => {
       const { error } = await supabase
         .from("contracts")
@@ -53,7 +53,7 @@ const ContractList: React.FC = () => {
     },
   });
 
-  const handleContractUpdate = async (contractId: string, updates: Partial<Tables<'contracts', 'Row'>>) => {
+  const handleContractUpdate = async (contractId: string, updates: Partial<TablesUpdate<'contracts'>>) => {
     await updateContractMutation.mutateAsync({ contractId, updates });
   };
 
