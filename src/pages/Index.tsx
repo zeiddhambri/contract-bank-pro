@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -5,6 +6,7 @@ import { Plus } from "lucide-react";
 import DashboardStats from "@/components/DashboardStats";
 import ContractList from "@/components/ContractList";
 import AlertsPanel from "@/components/AlertsPanel";
+import AuditLogPanel from "@/components/AuditLogPanel";
 import CreateContractDialog from "@/components/CreateContractDialog";
 import AppLogo from "@/components/AppLogo";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
@@ -32,6 +34,8 @@ const Index = () => {
         return <ContractList key={contractsRefreshTrigger} />;
       case "alerts":
         return <AlertsPanel />;
+      case "audit_trail":
+        return <AuditLogPanel />;
       default:
         return <DashboardStats />;
     }
@@ -72,6 +76,7 @@ const Index = () => {
               { id: "dashboard", label: t("dashboard") },
               { id: "contracts", label: t("contracts") },
               { id: "alerts", label: t("alerts") },
+              { id: "audit_trail", label: "Audit Trail" },
             ].map(tab => (
               <button
                 key={tab.id}

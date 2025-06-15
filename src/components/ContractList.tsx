@@ -1,10 +1,10 @@
-
 import React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import ContractTable from "./ContractTable";
 import { Tables, TablesUpdate } from "@/integrations/supabase/types";
+import { logAction } from "@/lib/audit-log";
 
 const fetchContracts = async () => {
   let { data, error } = await supabase
@@ -35,12 +35,13 @@ const ContractList: React.FC = () => {
         .eq("id", contractId);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, { contractId, updates }) => {
       queryClient.invalidateQueries({ queryKey: ["contracts"] });
       toast({
         title: "Succès",
         description: "Contrat mis à jour.",
       });
+      logAction("contract.update", { contractId, changes: updates });
     },
     onError: (error: any) => {
       toast({
@@ -62,12 +63,13 @@ const ContractList: React.FC = () => {
         .eq("id", contractId);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, { contractId }) => {
       queryClient.invalidateQueries({ queryKey: ["contracts"] });
       toast({
         title: "Succès",
         description: "Contrat supprimé avec succès.",
       });
+      logAction("contract.delete", { contractId });
     },
     onError: (error: any) => {
       toast({
