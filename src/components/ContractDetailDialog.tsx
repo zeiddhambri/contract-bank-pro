@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import {
   Dialog,
@@ -17,33 +16,6 @@ import ContractDetailForm from "./ContractDetailForm";
 import ContractFileUpload from "./ContractFileUpload";
 import ContractAlertCreator from "./ContractAlertCreator";
 
-const ALERT_TYPES = [
-  {
-    value: "echeance",
-    label: "Alerte échéance",
-    description: (ref: string, client: string) =>
-      `Échéance pour ${ref} (${client})`,
-  },
-  {
-    value: "montants",
-    label: "Alerte montants",
-    description: (ref: string, client: string) =>
-      `Montant inhabituel pour ${ref} (${client})`,
-  },
-  {
-    value: "retard",
-    label: "Alerte retard",
-    description: (ref: string, client: string) =>
-      `Retard de traitement : ${ref} (${client})`,
-  },
-  {
-    value: "personnalisee",
-    label: "Alerte personnalisée",
-    description: (ref: string, client: string) =>
-      `Alerte personnalisée pour ${ref} (${client})`,
-  },
-];
-
 interface ContractDetailDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -60,7 +32,7 @@ const ContractDetailDialog: React.FC<ContractDetailDialogProps> = ({
   isSaving,
 }) => {
   const [editedContract, setEditedContract] = useState<Tables<'contracts'>>(contract);
-  const [selectedAlert, setSelectedAlert] = useState(ALERT_TYPES[0].value);
+  const [customAlertMessage, setCustomAlertMessage] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -69,6 +41,7 @@ const ContractDetailDialog: React.FC<ContractDetailDialogProps> = ({
       setEditedContract(contract);
       setFile(null);
       setIsUploading(false);
+      setCustomAlertMessage('');
     }
   }, [contract, open]);
 
@@ -152,13 +125,20 @@ const ContractDetailDialog: React.FC<ContractDetailDialogProps> = ({
   };
 
   const handleCreateAlert = () => {
-    const alertType = ALERT_TYPES.find((a) => a.value === selectedAlert);
+    if (!customAlertMessage.trim()) {
+      toast({
+        title: "Champ vide",
+        description: "Veuillez saisir un message pour l'alerte.",
+        variant: "destructive",
+      });
+      return;
+    }
     toast({
-      title: alertType?.label ?? "Alerte",
-      description:
-        alertType?.description(contract.reference_decision, contract.client),
+      title: "Alerte personnalisée créée",
+      description: customAlertMessage,
     });
     // Ici on pourrait appeler une fonction backend pour stocker l’alerte
+    setCustomAlertMessage('');
   };
 
   const getFileUrl = (filePath: string) => {
@@ -188,10 +168,8 @@ const ContractDetailDialog: React.FC<ContractDetailDialogProps> = ({
             handleFileChange={handleFileChange}
           />
           <ContractAlertCreator
-            selectedAlert={selectedAlert}
-            setSelectedAlert={setSelectedAlert}
-            contract={contract}
-            alertTypes={ALERT_TYPES}
+            alertMessage={customAlertMessage}
+            setAlertMessage={setCustomAlertMessage}
           />
         </div>
         <DialogFooter className="flex flex-row gap-2 pt-4">
@@ -200,6 +178,7 @@ const ContractDetailDialog: React.FC<ContractDetailDialogProps> = ({
             onClick={handleCreateAlert}
             className="flex items-center gap-1"
             type="button"
+            disabled={!customAlertMessage.trim()}
           >
             <AlertTriangle size={16} className="mr-1" />
             Créer une alerte

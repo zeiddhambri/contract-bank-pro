@@ -1,35 +1,24 @@
 
 import React from 'react';
-import { Tables } from '@/integrations/supabase/types';
-
-interface AlertType {
-  value: string;
-  label: string;
-  description: (ref: string, client: string) => string;
-}
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
 interface ContractAlertCreatorProps {
-  selectedAlert: string;
-  setSelectedAlert: (value: string) => void;
-  contract: Tables<'contracts'>;
-  alertTypes: AlertType[];
+  alertMessage: string;
+  setAlertMessage: (value: string) => void;
 }
 
-const ContractAlertCreator: React.FC<ContractAlertCreatorProps> = ({ selectedAlert, setSelectedAlert, contract, alertTypes }) => {
+const ContractAlertCreator: React.FC<ContractAlertCreatorProps> = ({ alertMessage, setAlertMessage }) => {
   return (
     <div>
-      <div className="text-xs text-muted-foreground mb-1">Type d’alerte</div>
-      <select
-        value={selectedAlert}
-        onChange={(e) => setSelectedAlert(e.target.value)}
-        className="w-full rounded-md border-input bg-background py-2 px-3 shadow-sm focus:border-ring focus:outline-none focus:ring-ring sm:text-sm"
-      >
-        {alertTypes.map((alert) => (
-          <option key={alert.value} value={alert.value}>
-            {alert.label} – {alert.description(contract.reference_decision, contract.client)}
-          </option>
-        ))}
-      </select>
+      <Label htmlFor="alert-message" className="text-xs text-muted-foreground">Message d'alerte personnalisé</Label>
+      <Textarea
+        id="alert-message"
+        value={alertMessage}
+        onChange={(e) => setAlertMessage(e.target.value)}
+        placeholder="Saisissez le message pour votre alerte..."
+        className="mt-1"
+      />
     </div>
   );
 };
