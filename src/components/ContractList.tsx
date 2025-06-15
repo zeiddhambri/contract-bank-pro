@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -5,10 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { FileText } from "lucide-react";
+import { FileText, check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
-
+import { toast } from "@/hooks/use-toast";
 // Patch: add currency as an optional property for older contracts
 type Contract = Tables<'contracts'> & { currency?: string };
 
@@ -16,11 +17,19 @@ interface ContractListProps {
   onRefresh?: number;
 }
 
+const STATUS_OPTIONS = [
+  { value: "en_cours", label: "En cours" },
+  { value: "attente_signature", label: "Attente signature" },
+  { value: "valide", label: "Validé" },
+  { value: "alerte", label: "Alerte" },
+];
+
 const ContractList = ({ onRefresh }: ContractListProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("tous");
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [statusLoadingId, setStatusLoadingId] = useState<string | null>(null);
 
   const fetchContracts = async () => {
     try {
@@ -33,10 +42,14 @@ const ContractList = ({ onRefresh }: ContractListProps) => {
         throw error;
       }
 
-      // Patch: just use returned data—no currency prop to add
       setContracts((data || []));
     } catch (error) {
       console.error("Error fetching contracts:", error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger les contrats.",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -56,20 +69,15 @@ const ContractList = ({ onRefresh }: ContractListProps) => {
     }).format(amount) + ' ' + symbol;
   };
 
-  const getStatusBadge = (status: string) => {
+  // Adapter: Badge color according to the status
+  const getStatusBadgeClass = (status: string) => {
     const statusConfig = {
-      en_cours: { label: "En cours", color: "bg-blue-600/20 text-blue-400 border-blue-500/30" },
-      attente_signature: { label: "Attente signature", color: "bg-orange-600/20 text-orange-400 border-orange-500/30" },
-      valide: { label: "Validé", color: "bg-green-600/20 text-green-400 border-green-500/30" },
-      alerte: { label: "Alerte", color: "bg-red-600/20 text-red-400 border-red-500/30" }
+      en_cours: "bg-blue-600/20 text-blue-400 border-blue-500/30",
+      attente_signature: "bg-orange-600/20 text-orange-400 border-orange-500/30",
+      valide: "bg-green-600/20 text-green-400 border-green-500/30",
+      alerte: "bg-red-600/20 text-red-400 border-red-500/30",
     };
-    
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.en_cours;
-    return (
-      <Badge className={config.color}>
-        {config.label}
-      </Badge>
-    );
+    return statusConfig[status as keyof typeof statusConfig] || statusConfig.en_cours;
   };
 
   const getTypeLabel = (type: string) => {
@@ -135,6 +143,36 @@ const ContractList = ({ onRefresh }: ContractListProps) => {
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('fr-FR');
+  };
+
+  const handleStatusChange = async (contractId: string, newStatus: string) => {
+    setStatusLoadingId(contractId);
+    try {
+      const { error } = await supabase
+        .from('contracts')
+        .update({ statut: newStatus })
+        .eq('id', contractId);
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Statut mis à jour",
+        description: "Le statut du contrat a bien été modifié.",
+        icon: check,
+      });
+      fetchContracts();
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Échec de la mise à jour du statut.",
+        variant: "destructive",
+      });
+      console.error(error);
+    } finally {
+      setStatusLoadingId(null);
+    }
   };
 
   if (isLoading) {
@@ -214,7 +252,29 @@ const ContractList = ({ onRefresh }: ContractListProps) => {
                     {formatCurrency(contract.montant)}
                   </TableCell>
                   <TableCell className="text-slate-300">{getGarantieLabel(contract.garantie)}</TableCell>
-                  <TableCell>{getStatusBadge(contract.statut)}</TableCell>
+                  {/* Statut : désormais éditable */}
+                  <TableCell>
+                    <Select
+                      value={contract.statut}
+                      onValueChange={(v) => handleStatusChange(contract.id, v)}
+                      disabled={statusLoadingId === contract.id}
+                    >
+                      <SelectTrigger
+                        className={`min-w-[120px] border ${getStatusBadgeClass(contract.statut)} px-2 py-1 text-sm font-medium`}
+                      >
+                        <SelectValue>
+                          {STATUS_OPTIONS.find(opt => opt.value === contract.statut)?.label || contract.statut}
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent className="bg-black border-slate-600 z-50">
+                        {STATUS_OPTIONS.map(opt => (
+                          <SelectItem key={opt.value} value={opt.value} className="text-white">
+                            {opt.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
                   <TableCell className="text-slate-300">{getAgenceLabel(contract.agence)}</TableCell>
                   <TableCell className="text-slate-300">{formatDate(contract.date_decision)}</TableCell>
                   <TableCell>
@@ -237,3 +297,4 @@ const ContractList = ({ onRefresh }: ContractListProps) => {
 };
 
 export default ContractList;
+
