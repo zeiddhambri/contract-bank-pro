@@ -78,10 +78,12 @@ const CreateTemplateDialog: React.FC<CreateTemplateDialogProps> = ({
 
       const { error } = await supabase
         .from('contract_templates')
-        .insert([{
-          ...data,
+        .insert({
+          name: data.name,
+          description: data.description || null,
+          type: data.type,
           bank_id: profile.bank_id
-        }]);
+        });
       if (error) throw error;
     },
     onSuccess: () => {
