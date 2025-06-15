@@ -1,142 +1,114 @@
+
 import React from "react";
-// Correction de l'import pour éviter l'erreur de nom minuscule
-import { Check } from "lucide-react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import ContractStatusSelect from "./ContractStatusSelect";
-import ContractDetailDialog from "./ContractDetailDialog";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { createClient } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
+import ContractTable from "./ContractTable";
 
-interface Contract {
-  id: string;
-  reference_decision: string;
-  client: string;
-  type: string;
-  montant: number;
-  garantie: string;
-  statut: string;
-  agence: string;
-  date_decision: string;
+// Helpers to display labels (can be improved/refactored out)
+const TYPE_LABELS: Record<string, string> = {
+  credit_consommation: "Crédit Conso",
+  credit_immo: "Crédit Immo",
+  decouvert: "Découvert",
+};
+const GARANTIE_LABELS: Record<string, string> = {
+  hypotheque: "Hypothèque",
+  nantissement: "Nantissement",
+  caution: "Caution",
+};
+const STATUS_BADGE_CLASSES: Record<string, string> = {
+  en_cours: "border-orange-400 text-orange-300 bg-orange-500/10",
+  attente_signature: "border-yellow-400 text-yellow-300 bg-yellow-500/10",
+  valide: "border-green-400 text-green-300 bg-green-500/10",
+  alerte: "border-red-400 text-red-300 bg-red-500/10",
+};
+const AGENCE_LABELS: Record<string, string> = {
+  agence_centre: "Centre",
+  agence_nord: "Nord",
+  agence_sud: "Sud",
+};
+function formatDate(dateString: string) {
+  if (!dateString) return "";
+  const d = new Date(dateString);
+  return d.toLocaleDateString();
+}
+function formatCurrency(amount: number) {
+  return `${amount.toLocaleString("fr-FR")} MAD`;
 }
 
-interface ContractTableProps {
-  contracts: Contract[];
-  isLoading: boolean;
-  statusLoadingId: string | null;
-  handleStatusChange: (contractId: string, newStatus: string) => void;
-  getTypeLabel: (type: string) => string;
-  getGarantieLabel: (garantie: string) => string;
-  getStatusBadgeClass: (status: string) => string;
-  getAgenceLabel: (agence: string) => string;
-  formatDate: (dateString: string) => string;
-  formatCurrency: (amount: number) => string;
-}
+const supabase = createClient();
 
-const ContractTable: React.FC<ContractTableProps> = ({
-  contracts,
-  isLoading,
-  statusLoadingId,
-  handleStatusChange,
-  getTypeLabel,
-  getGarantieLabel,
-  getStatusBadgeClass,
-  getAgenceLabel,
-  formatDate,
-  formatCurrency,
-}) => {
-  const [selectedContract, setSelectedContract] = React.useState<Contract | null>(null);
-  const [dialogOpen, setDialogOpen] = React.useState(false);
+const fetchContracts = async () => {
+  let { data, error } = await supabase
+    .from("contracts")
+    .select("*")
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return data || [];
+};
 
-  const handleVoirDetails = (contract: Contract) => {
-    setSelectedContract(contract);
-    setDialogOpen(true);
+const ContractList: React.FC = () => {
+  const queryClient = useQueryClient();
+
+  const { data: contracts, isLoading, error } = useQuery({
+    queryKey: ["contracts"],
+    queryFn: fetchContracts,
+  });
+
+  // Status update with optimistic UI
+  const statusMutation = useMutation({
+    mutationFn: async ({
+      contractId,
+      newStatus,
+    }: {
+      contractId: string;
+      newStatus: string;
+    }) => {
+      const { error } = await supabase
+        .from("contracts")
+        .update({ statut: newStatus })
+        .eq("id", contractId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["contracts"] });
+      toast({
+        title: "Succès",
+        description: "Statut mis à jour.",
+      });
+    },
+    meta: {
+      onError: (error: any) => {
+        toast({
+          title: "Erreur",
+          description: error?.message || "Impossible de mettre à jour le statut.",
+        });
+      },
+    },
+  });
+
+  const handleStatusChange = (contractId: string, newStatus: string) => {
+    statusMutation.mutate({ contractId, newStatus });
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center">
-        <p className="text-slate-400">Chargement des contrats...</p>
-      </div>
-    );
-  }
   return (
-    <>
-      <div className="overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow className="border-slate-700 hover:bg-slate-800/50">
-              <TableHead className="text-slate-300 font-medium">Référence Décision</TableHead>
-              <TableHead className="text-slate-300 font-medium">Client</TableHead>
-              <TableHead className="text-slate-300 font-medium">Type</TableHead>
-              <TableHead className="text-slate-300 font-medium">Montant</TableHead>
-              <TableHead className="text-slate-300 font-medium">Garantie</TableHead>
-              <TableHead className="text-slate-300 font-medium">Statut</TableHead>
-              <TableHead className="text-slate-300 font-medium">Agence</TableHead>
-              <TableHead className="text-slate-300 font-medium">Date décision</TableHead>
-              <TableHead className="text-slate-300 font-medium">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {contracts.map((contract) => (
-              <TableRow key={contract.id} className="border-slate-700 hover:bg-slate-800/30 transition-colors">
-                <TableCell className="font-medium text-white">{contract.reference_decision}</TableCell>
-                <TableCell className="text-slate-300">{contract.client}</TableCell>
-                <TableCell>
-                  <Badge variant="outline" className="border-slate-600 text-slate-300">
-                    {getTypeLabel(contract.type)}
-                  </Badge>
-                </TableCell>
-                <TableCell className="font-semibold text-orange-400">
-                  {formatCurrency(contract.montant)}
-                </TableCell>
-                <TableCell className="text-slate-300">{getGarantieLabel(contract.garantie)}</TableCell>
-                <TableCell>
-                  <ContractStatusSelect
-                    value={contract.statut}
-                    disabled={statusLoadingId === contract.id}
-                    onChange={(v) => handleStatusChange(contract.id, v)}
-                    getStatusBadgeClass={getStatusBadgeClass}
-                  />
-                </TableCell>
-                <TableCell className="text-slate-300">{getAgenceLabel(contract.agence)}</TableCell>
-                <TableCell className="text-slate-300">{formatDate(contract.date_decision)}</TableCell>
-                <TableCell>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="border-orange-500/30 text-orange-400 hover:bg-orange-500/20 hover:text-orange-300"
-                    onClick={() => handleVoirDetails(contract)}
-                  >
-                    Voir détails
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-
-      {selectedContract && (
-        <ContractDetailDialog
-          open={dialogOpen}
-          onOpenChange={setDialogOpen}
-          contract={selectedContract}
-          onSaveStatus={async (id, newStatus) => {
-            handleStatusChange(id, newStatus);
-          }}
-          statusLoading={statusLoadingId === selectedContract.id}
-          getStatusBadgeClass={getStatusBadgeClass}
-        />
-      )}
-    </>
+    <ContractTable
+      contracts={contracts || []}
+      isLoading={isLoading}
+      statusLoadingId={
+        statusMutation.isPending && statusMutation.variables
+          ? statusMutation.variables.contractId
+          : null
+      }
+      handleStatusChange={handleStatusChange}
+      getTypeLabel={(type) => TYPE_LABELS[type] || type}
+      getGarantieLabel={(garantie) => GARANTIE_LABELS[garantie] || garantie}
+      getStatusBadgeClass={(status) => STATUS_BADGE_CLASSES[status] || ""}
+      getAgenceLabel={(agence) => AGENCE_LABELS[agence] || agence}
+      formatDate={formatDate}
+      formatCurrency={formatCurrency}
+    />
   );
 };
 
-export default ContractTable;
+export default ContractList;
