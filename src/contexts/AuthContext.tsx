@@ -1,12 +1,15 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { Tables } from '@/integrations/supabase/types';
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
-  userRole: string | null;
+  userProfile: Tables<'profiles'> | null;
+  userRole: Tables<'profiles'>['role'] | null;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
@@ -28,46 +31,54 @@ export const useAuth = () => {
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const [userRole, setUserRole] = useState<string | null>(null);
+  const [userProfile, setUserProfile] = useState<Tables<'profiles'> | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  // Check if the current user is the admin
-  const isAdmin = user?.email === 'zeid.dhambri@gmail.com';
+  const isAdmin = userProfile?.role === 'super_admin';
+  const userRole = userProfile?.role ?? null;
 
   useEffect(() => {
-    // Set up auth state listener
+    const fetchSessionAndProfile = async () => {
+      setLoading(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      setSession(session);
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
+
+      if (currentUser) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', currentUser.id)
+          .single();
+        setUserProfile(profile || null);
+      } else {
+        setUserProfile(null);
+      }
+      setLoading(false);
+    };
+
+    fetchSessionAndProfile();
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         setSession(session);
-        setUser(session?.user ?? null);
+        const currentUser = session?.user ?? null;
+        setUser(currentUser);
         
-        // Set role based on the specific admin email
-        if (session?.user?.email === 'zeid.dhambri@gmail.com') {
-          setUserRole('admin');
-        } else if (session?.user?.email) {
-          setUserRole('user');
-        } else {
-          setUserRole(null);
+        if (event === 'SIGNED_IN' && currentUser) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', currentUser.id)
+            .single();
+          setUserProfile(profile || null);
+        } else if (event === 'SIGNED_OUT') {
+          setUserProfile(null);
         }
-        
-        setLoading(false);
       }
     );
-
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user?.email === 'zeid.dhambri@gmail.com') {
-        setUserRole('admin');
-      } else if (session?.user?.email) {
-        setUserRole('user');
-      }
-      
-      setLoading(false);
-    });
 
     return () => subscription.unsubscribe();
   }, []);
@@ -125,7 +136,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
     if (!error) {
-      setUserRole(null);
+      setUserProfile(null);
       toast({
         title: "Déconnexion réussie",
         description: "À bientôt !",
@@ -159,6 +170,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const value = {
     user,
     session,
+    userProfile,
     userRole,
     signIn,
     signUp,

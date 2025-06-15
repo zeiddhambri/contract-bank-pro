@@ -9,9 +9,31 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      banks: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       contracts: {
         Row: {
           agence: string
+          bank_id: string
           client: string
           created_at: string
           date_decision: string
@@ -29,6 +51,7 @@ export type Database = {
         }
         Insert: {
           agence: string
+          bank_id: string
           client: string
           created_at?: string
           date_decision?: string
@@ -46,6 +69,7 @@ export type Database = {
         }
         Update: {
           agence?: string
+          bank_id?: string
           client?: string
           created_at?: string
           date_decision?: string
@@ -61,7 +85,47 @@ export type Database = {
           type?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "contracts_bank_id_fkey"
+            columns: ["bank_id"]
+            isOneToOne: false
+            referencedRelation: "banks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          bank_id: string | null
+          full_name: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string | null
+        }
+        Insert: {
+          bank_id?: string | null
+          full_name?: string | null
+          id: string
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string | null
+        }
+        Update: {
+          bank_id?: string | null
+          full_name?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_bank_id_fkey"
+            columns: ["bank_id"]
+            isOneToOne: false
+            referencedRelation: "banks"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
@@ -72,9 +136,17 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_my_bank_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      get_my_role: {
+        Args: Record<PropertyKey, never>
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "super_admin" | "bank_admin" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -189,6 +261,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["super_admin", "bank_admin", "user"],
+    },
   },
 } as const

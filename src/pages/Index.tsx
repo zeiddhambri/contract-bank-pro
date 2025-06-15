@@ -9,12 +9,15 @@ import AlertsPanel from "@/components/AlertsPanel";
 import CreateContractDialog from "@/components/CreateContractDialog";
 import Logo from "@/components/Logo";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+import { useAuth } from "@/contexts/AuthContext";
+import UserNav from "@/components/UserNav";
 
 const Index = () => {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState("dashboard");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [contractsRefreshTrigger, setContractsRefreshTrigger] = useState(0);
+  const { user } = useAuth();
   const handleContractCreated = () => {
     setContractsRefreshTrigger(prev => prev + 1);
   };
@@ -23,7 +26,7 @@ const Index = () => {
       case "dashboard":
         return <DashboardStats />;
       case "contracts":
-        return <ContractList />;
+        return <ContractList key={contractsRefreshTrigger} />;
       case "alerts":
         return <AlertsPanel />;
       default:
@@ -42,11 +45,14 @@ const Index = () => {
           </div>
           
           <div className="flex items-center space-x-4">
-            <Button onClick={() => setIsCreateDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              <span>{t('newContract')}</span>
-            </Button>
+            {user && (
+              <Button onClick={() => setIsCreateDialogOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                <span>{t('newContract')}</span>
+              </Button>
+            )}
             <LanguageSwitcher />
+            <UserNav />
           </div>
         </div>
       </header>
