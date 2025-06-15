@@ -14,7 +14,7 @@ export const GARANTIE_LABELS: Record<string, string> = {
 export const CONTRACT_STATUS_OPTIONS = [
   { value: "en_cours", label: "En cours" },
   { value: "attente_signature", label: "Attente signature" },
-  { value: "valide", label: "Validé" },
+  { value: "valide", label: "Mis en Place" },
   { value: "alerte", label: "Alerte" },
   { value: "documents_manquants", label: "Documents manquants" },
   { value: "en_cours_de_signature_b", label: "En cours de signature B" },
