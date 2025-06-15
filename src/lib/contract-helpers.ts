@@ -1,9 +1,14 @@
-
 export const TYPE_LABELS: Record<string, string> = {
   credit_consommation: "Crédit Conso",
   credit_immo: "Crédit Immo",
   decouvert: "Découvert",
 };
+
+export const CONTRACT_TYPES = [
+  { value: "credit_consommation", label: "Crédit Consommation" },
+  { value: "credit_immo", label: "Crédit Immobilier" },
+  { value: "decouvert", label: "Découvert" },
+];
 
 export const GARANTIE_LABELS: Record<string, string> = {
   hypotheque: "Hypothèque",

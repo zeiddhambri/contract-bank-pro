@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -164,7 +163,7 @@ const TemplateFieldsManager: React.FC<TemplateFieldsManagerProps> = ({
         </Card>
       )}
 
-      <Ad dFieldDialog
+      <AddFieldDialog
         templateId={templateId}
         open={addDialogOpen}
         onOpenChange={setAddDialogOpen}

@@ -6,6 +6,7 @@ import { toast } from '@/hooks/use-toast';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   Dialog,
   DialogContent,
@@ -50,6 +51,7 @@ const CreateTemplateDialog: React.FC<CreateTemplateDialogProps> = ({
   onOpenChange,
 }) => {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [isCreating, setIsCreating] = useState(false);
 
   const form = useForm<TemplateFormData>({
@@ -63,9 +65,23 @@ const CreateTemplateDialog: React.FC<CreateTemplateDialogProps> = ({
 
   const createTemplateMutation = useMutation({
     mutationFn: async (data: TemplateFormData) => {
+      // Get user's bank_id from profiles
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('bank_id')
+        .eq('id', user?.id)
+        .single();
+
+      if (profileError || !profile?.bank_id) {
+        throw new Error('Impossible de récupérer les informations de la banque');
+      }
+
       const { error } = await supabase
         .from('contract_templates')
-        .insert([data]);
+        .insert([{
+          ...data,
+          bank_id: profile.bank_id
+        }]);
       if (error) throw error;
     },
     onSuccess: () => {
