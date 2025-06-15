@@ -1,5 +1,6 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -94,7 +95,33 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-gradient-to-br from-background via-background to-background/95 text-foreground;
+    font-family: 'Inter', 'Poppins', sans-serif;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    background-attachment: fixed;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
     font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+  }
+}
+
+/* Custom gradient backgrounds */
+@layer utilities {
+  .gradient-primary {
+    @apply bg-gradient-to-r from-primary via-primary/90 to-primary/80;
+  }
+  
+  .gradient-card {
+    @apply bg-gradient-to-br from-card/90 to-card/70;
+  }
+  
+  .text-gradient {
+    @apply bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent;
+  }
+  
+  .glass-effect {
+    @apply backdrop-blur-sm bg-gradient-to-br from-background/80 to-background/60 border border-border/50;
   }
 }
