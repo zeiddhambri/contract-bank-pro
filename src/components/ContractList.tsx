@@ -1,15 +1,14 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { FileText, check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { toast } from "@/hooks/use-toast";
+import ContractTable from "./ContractTable";
 // Patch: add currency as an optional property for older contracts
 type Contract = Tables<'contracts'> & { currency?: string };
 
@@ -136,7 +135,7 @@ const ContractList = ({ onRefresh }: ContractListProps) => {
 
   const filteredContracts = contracts.filter(contract => {
     const matchesSearch = contract.client.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         contract.reference_decision.toLowerCase().includes(searchTerm.toLowerCase());
+      contract.reference_decision.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "tous" || contract.statut === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -297,4 +296,3 @@ const ContractList = ({ onRefresh }: ContractListProps) => {
 };
 
 export default ContractList;
-
