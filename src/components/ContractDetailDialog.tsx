@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import {
   Dialog,
@@ -10,6 +11,10 @@ import { Button } from "@/components/ui/button";
 import ContractStatusSelect from "./ContractStatusSelect";
 import { toast } from "@/hooks/use-toast";
 import { AlertTriangle } from "lucide-react";
+import { Tables } from "@/integrations/supabase/types";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
+import { AGENCE_LABELS } from "@/lib/contract-helpers";
 
 const ALERT_TYPES = [
   {
@@ -41,43 +46,48 @@ const ALERT_TYPES = [
 interface ContractDetailDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  contract: {
-    id: string;
-    client: string;
-    reference_decision: string;
-    type: string;
-    montant: number;
-    garantie: string;
-    statut: string;
-    agence: string;
-    date_decision: string;
-  };
-  onSaveStatus: (contractId: string, newStatus: string) => Promise<void>;
-  statusLoading: boolean;
+  contract: Tables<'contracts', 'Row'>;
+  onSaveChanges: (contractId: string, updates: Partial<Tables<'contracts', 'Update'>>) => Promise<void>;
+  isSaving: boolean;
 }
 
 const ContractDetailDialog: React.FC<ContractDetailDialogProps> = ({
   open,
   onOpenChange,
   contract,
-  onSaveStatus,
-  statusLoading,
+  onSaveChanges,
+  isSaving,
 }) => {
-  const [localStatus, setLocalStatus] = useState(contract.statut);
+  const [editedContract, setEditedContract] = useState(contract);
   const [selectedAlert, setSelectedAlert] = useState(ALERT_TYPES[0].value);
 
   React.useEffect(() => {
-    setLocalStatus(contract.statut);
-  }, [contract.statut, contract.id, open]);
-
-  const handleStatusSave = async () => {
-    if (localStatus !== contract.statut) {
-      await onSaveStatus(contract.id, localStatus);
+    if (open) {
+      setEditedContract(contract);
     }
-    toast({
-      title: "Contrat mis à jour",
-      description: "Le statut a bien été modifié.",
+  }, [contract, open]);
+
+  const handleFieldChange = (field: keyof Tables<'contracts', 'Update'>, value: any) => {
+    setEditedContract(prev => ({ ...prev, [field]: value }));
+  };
+  
+  const getChangedFields = () => {
+    const changes: Partial<Tables<'contracts', 'Update'>> = {};
+    (Object.keys(editedContract) as Array<keyof typeof editedContract>).forEach(key => {
+      if (key in contract && editedContract[key] !== contract[key]) {
+        // @ts-ignore
+        changes[key] = editedContract[key];
+      }
     });
+    return changes;
+  };
+  
+  const changedFields = getChangedFields();
+  const hasChanges = Object.keys(changedFields).length > 0;
+
+  const handleSave = async () => {
+    if (!hasChanges) return;
+    await onSaveChanges(contract.id, changedFields);
     onOpenChange(false);
   };
 
@@ -93,30 +103,45 @@ const ContractDetailDialog: React.FC<ContractDetailDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             Détails du contrat
           </DialogTitle>
         </DialogHeader>
-        <div className="space-y-2">
+        <div className="space-y-4 py-4">
           <div>
             <div className="text-xs text-slate-400">Référence</div>
             <div className="font-bold text-white">{contract.reference_decision}</div>
           </div>
           <div>
-            <div className="text-xs text-slate-400">Client</div>
-            <div className="text-white">{contract.client}</div>
+            <Label htmlFor="client" className="text-xs text-slate-400">Client</Label>
+            <Input id="client" value={editedContract.client} onChange={(e) => handleFieldChange('client', e.target.value)} className="bg-slate-800 border-slate-600 text-white" />
+          </div>
+           <div>
+            <Label htmlFor="montant" className="text-xs text-slate-400">Montant</Label>
+            <Input id="montant" type="number" value={editedContract.montant} onChange={(e) => handleFieldChange('montant', Number(e.target.value))} className="bg-slate-800 border-slate-600 text-white" />
+          </div>
+          <div>
+            <Label htmlFor="date_decision" className="text-xs text-slate-400">Date décision</Label>
+            <Input id="date_decision" type="date" value={editedContract.date_decision.split('T')[0]} onChange={(e) => handleFieldChange('date_decision', e.target.value)} className="bg-slate-800 border-slate-600 text-white" />
+          </div>
+          <div>
+             <Label htmlFor="agence" className="text-xs text-slate-400">Agence</Label>
+             <select id="agence" value={editedContract.agence} onChange={(e) => handleFieldChange('agence', e.target.value)} className="mt-1 block w-full bg-slate-800 border border-slate-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-orange-500 focus:border-orange-500">
+               {Object.entries(AGENCE_LABELS).map(([value, label]) => (
+                 <option key={value} value={value}>{label}</option>
+               ))}
+             </select>
           </div>
           <div>
             <div className="text-xs text-slate-400">Statut</div>
             <ContractStatusSelect
-              value={localStatus}
-              disabled={statusLoading}
-              onChange={setLocalStatus}
+              value={editedContract.statut}
+              disabled={isSaving}
+              onChange={(v) => handleFieldChange('statut', v)}
             />
           </div>
-          {/* Menu déroulant d'alertes */}
           <div>
             <div className="text-xs text-slate-400 mb-1">Type d’alerte</div>
             <select
@@ -136,7 +161,7 @@ const ContractDetailDialog: React.FC<ContractDetailDialogProps> = ({
           <Button
             variant="outline"
             onClick={handleCreateAlert}
-            className="flex items-center gap-1 border-red-500/30 text-red-400"
+            className="flex items-center gap-1 border-red-500/30 text-red-400 hover:bg-red-500/10 hover:text-red-300"
             type="button"
           >
             <AlertTriangle size={16} className="mr-1" />
@@ -144,9 +169,9 @@ const ContractDetailDialog: React.FC<ContractDetailDialogProps> = ({
           </Button>
           <div className="flex-1" />
           <Button
-            onClick={handleStatusSave}
-            disabled={statusLoading || localStatus === contract.statut}
-            className="bg-orange-500 text-white hover:bg-orange-600"
+            onClick={handleSave}
+            disabled={isSaving || !hasChanges}
+            className="bg-orange-500 text-white hover:bg-orange-600 disabled:bg-slate-600"
           >
             Sauvegarder
           </Button>

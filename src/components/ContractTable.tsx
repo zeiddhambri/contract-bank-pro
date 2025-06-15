@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import {
   Table,
@@ -19,36 +18,25 @@ import {
   getGarantieLabel,
   getTypeLabel,
 } from "@/lib/contract-helpers";
-
-interface Contract {
-  id: string;
-  reference_decision: string;
-  client: string;
-  type: string;
-  montant: number;
-  garantie: string;
-  statut: string;
-  agence: string;
-  date_decision: string;
-}
+import { Tables } from "@/integrations/supabase/types";
 
 interface ContractTableProps {
-  contracts: Contract[];
+  contracts: Tables<'contracts', 'Row'>[];
   isLoading: boolean;
-  statusLoadingId: string | null;
-  handleStatusChange: (contractId: string, newStatus: string) => void;
+  updatingContractId: string | null;
+  handleContractUpdate: (contractId: string, updates: Partial<Tables<'contracts', 'Update'>>) => Promise<void>;
 }
 
 const ContractTable: React.FC<ContractTableProps> = ({
   contracts,
   isLoading,
-  statusLoadingId,
-  handleStatusChange,
+  updatingContractId,
+  handleContractUpdate,
 }) => {
-  const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
+  const [selectedContract, setSelectedContract] = useState<Tables<'contracts', 'Row'> | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  const handleVoirDetails = (contract: Contract) => {
+  const handleVoirDetails = (contract: Tables<'contracts', 'Row'>) => {
     setSelectedContract(contract);
     setDialogOpen(true);
   };
@@ -94,8 +82,8 @@ const ContractTable: React.FC<ContractTableProps> = ({
                 <TableCell>
                   <ContractStatusSelect
                     value={contract.statut}
-                    disabled={statusLoadingId === contract.id}
-                    onChange={(v) => handleStatusChange(contract.id, v)}
+                    disabled={updatingContractId === contract.id}
+                    onChange={(v) => handleContractUpdate(contract.id, { statut: v })}
                   />
                 </TableCell>
                 <TableCell className="text-slate-300">{getAgenceLabel(contract.agence)}</TableCell>
@@ -121,10 +109,8 @@ const ContractTable: React.FC<ContractTableProps> = ({
           open={dialogOpen}
           onOpenChange={setDialogOpen}
           contract={selectedContract}
-          onSaveStatus={async (id, newStatus) => {
-            handleStatusChange(id, newStatus);
-          }}
-          statusLoading={statusLoadingId === selectedContract.id}
+          onSaveChanges={handleContractUpdate}
+          isSaving={updatingContractId === selectedContract.id}
         />
       )}
     </>

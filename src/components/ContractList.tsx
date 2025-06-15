@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import ContractTable from "./ContractTable";
+import { Tables } from "@/integrations/supabase/types";
 
 const fetchContracts = async () => {
   let { data, error } = await supabase
@@ -17,23 +18,22 @@ const fetchContracts = async () => {
 const ContractList: React.FC = () => {
   const queryClient = useQueryClient();
 
-  const { data: contracts, isLoading, error } = useQuery({
+  const { data: contracts, isLoading } = useQuery<Tables<'contracts', 'Row'>[]>({
     queryKey: ["contracts"],
     queryFn: fetchContracts,
   });
 
-  // Status update with optimistic UI
-  const statusMutation = useMutation({
+  const updateContractMutation = useMutation({
     mutationFn: async ({
       contractId,
-      newStatus,
+      updates,
     }: {
       contractId: string;
-      newStatus: string;
+      updates: Partial<Tables<'contracts', 'Update'>>;
     }) => {
       const { error } = await supabase
         .from("contracts")
-        .update({ statut: newStatus })
+        .update(updates)
         .eq("id", contractId);
       if (error) throw error;
     },
@@ -41,33 +41,33 @@ const ContractList: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ["contracts"] });
       toast({
         title: "Succès",
-        description: "Statut mis à jour.",
+        description: "Contrat mis à jour.",
       });
     },
     meta: {
       onError: (error: any) => {
         toast({
           title: "Erreur",
-          description: error?.message || "Impossible de mettre à jour le statut.",
+          description: error?.message || "Impossible de mettre à jour le contrat.",
         });
       },
     },
   });
 
-  const handleStatusChange = (contractId: string, newStatus: string) => {
-    statusMutation.mutate({ contractId, newStatus });
+  const handleContractUpdate = async (contractId: string, updates: Partial<Tables<'contracts', 'Update'>>) => {
+    await updateContractMutation.mutateAsync({ contractId, updates });
   };
 
   return (
     <ContractTable
       contracts={contracts || []}
       isLoading={isLoading}
-      statusLoadingId={
-        statusMutation.isPending && statusMutation.variables
-          ? statusMutation.variables.contractId
+      updatingContractId={
+        updateContractMutation.isPending && updateContractMutation.variables
+          ? updateContractMutation.variables.contractId
           : null
       }
-      handleStatusChange={handleStatusChange}
+      handleContractUpdate={handleContractUpdate}
     />
   );
 };
