@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import {
   Dialog,
@@ -11,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import ContractStatusSelect from "./ContractStatusSelect";
 import { toast } from "@/hooks/use-toast";
 import { AlertTriangle } from "lucide-react";
-import { Tables, TablesUpdate } from "@/integrations/supabase/types";
+import { Tables } from "@/integrations/supabase/types";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { AGENCE_LABELS } from "@/lib/contract-helpers";
@@ -47,7 +46,7 @@ interface ContractDetailDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   contract: Tables<'contracts', 'Row'>;
-  onSaveChanges: (contractId: string, updates: Partial<TablesUpdate<'contracts'>>) => Promise<void>;
+  onSaveChanges: (contractId: string, updates: Partial<Tables<'contracts', 'Update'>>) => Promise<void>;
   isSaving: boolean;
 }
 
@@ -67,12 +66,12 @@ const ContractDetailDialog: React.FC<ContractDetailDialogProps> = ({
     }
   }, [contract, open]);
 
-  const handleFieldChange = (field: keyof TablesUpdate<'contracts'>, value: any) => {
-    setEditedContract(prev => ({ ...prev, [field]: value }));
+  const handleFieldChange = (field: keyof Tables<'contracts', 'Update'>, value: any) => {
+    setEditedContract(prev => ({ ...prev, [field]: value as any }));
   };
   
   const getChangedFields = () => {
-    const changes: Partial<TablesUpdate<'contracts'>> = {};
+    const changes: Partial<Tables<'contracts', 'Update'>> = {};
     if (editedContract.client !== contract.client) {
       changes.client = editedContract.client;
     }
@@ -120,31 +119,31 @@ const ContractDetailDialog: React.FC<ContractDetailDialogProps> = ({
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div>
-            <div className="text-xs text-slate-400">Référence</div>
-            <div className="font-bold text-white">{contract.reference_decision}</div>
+            <div className="text-xs text-muted-foreground">Référence</div>
+            <div className="font-bold">{contract.reference_decision}</div>
           </div>
           <div>
-            <Label htmlFor="client" className="text-xs text-slate-400">Client</Label>
-            <Input id="client" value={editedContract.client} onChange={(e) => handleFieldChange('client', e.target.value)} className="bg-slate-800 border-slate-600 text-white" />
+            <Label htmlFor="client" className="text-xs text-muted-foreground">Client</Label>
+            <Input id="client" value={editedContract.client} onChange={(e) => handleFieldChange('client', e.target.value)} />
           </div>
            <div>
-            <Label htmlFor="montant" className="text-xs text-slate-400">Montant</Label>
-            <Input id="montant" type="number" value={editedContract.montant} onChange={(e) => handleFieldChange('montant', Number(e.target.value))} className="bg-slate-800 border-slate-600 text-white" />
+            <Label htmlFor="montant" className="text-xs text-muted-foreground">Montant</Label>
+            <Input id="montant" type="number" value={editedContract.montant} onChange={(e) => handleFieldChange('montant', Number(e.target.value))} />
           </div>
           <div>
-            <Label htmlFor="date_decision" className="text-xs text-slate-400">Date décision</Label>
-            <Input id="date_decision" type="date" value={editedContract.date_decision.split('T')[0]} onChange={(e) => handleFieldChange('date_decision', e.target.value)} className="bg-slate-800 border-slate-600 text-white" />
+            <Label htmlFor="date_decision" className="text-xs text-muted-foreground">Date décision</Label>
+            <Input id="date_decision" type="date" value={editedContract.date_decision?.split('T')[0] || ''} onChange={(e) => handleFieldChange('date_decision', e.target.value)} />
           </div>
           <div>
-             <Label htmlFor="agence" className="text-xs text-slate-400">Agence</Label>
-             <select id="agence" value={editedContract.agence} onChange={(e) => handleFieldChange('agence', e.target.value)} className="mt-1 block w-full bg-slate-800 border border-slate-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-orange-500 focus:border-orange-500">
+             <Label htmlFor="agence" className="text-xs text-muted-foreground">Agence</Label>
+             <select id="agence" value={editedContract.agence} onChange={(e) => handleFieldChange('agence', e.target.value)} className="mt-1 block w-full rounded-md border-input bg-background py-2 px-3 shadow-sm focus:border-ring focus:outline-none focus:ring-ring sm:text-sm">
                {Object.entries(AGENCE_LABELS).map(([value, label]) => (
                  <option key={value} value={value}>{label}</option>
                ))}
              </select>
           </div>
           <div>
-            <div className="text-xs text-slate-400">Statut</div>
+            <div className="text-xs text-muted-foreground">Statut</div>
             <ContractStatusSelect
               value={editedContract.statut}
               disabled={isSaving}
@@ -152,11 +151,11 @@ const ContractDetailDialog: React.FC<ContractDetailDialogProps> = ({
             />
           </div>
           <div>
-            <div className="text-xs text-slate-400 mb-1">Type d’alerte</div>
+            <div className="text-xs text-muted-foreground mb-1">Type d’alerte</div>
             <select
               value={selectedAlert}
               onChange={(e) => setSelectedAlert(e.target.value)}
-              className="bg-slate-800 border border-slate-600 rounded px-3 py-2 text-white w-full focus:outline-none focus:ring-2 focus:ring-orange-500"
+              className="w-full rounded-md border-input bg-background py-2 px-3 shadow-sm focus:border-ring focus:outline-none focus:ring-ring sm:text-sm"
             >
               {ALERT_TYPES.map((alert) => (
                 <option key={alert.value} value={alert.value}>
@@ -168,9 +167,9 @@ const ContractDetailDialog: React.FC<ContractDetailDialogProps> = ({
         </div>
         <DialogFooter className="flex flex-row gap-2 pt-4">
           <Button
-            variant="outline"
+            variant="destructive"
             onClick={handleCreateAlert}
-            className="flex items-center gap-1 border-red-500/30 text-red-400 hover:bg-red-500/10 hover:text-red-300"
+            className="flex items-center gap-1"
             type="button"
           >
             <AlertTriangle size={16} className="mr-1" />
@@ -180,7 +179,6 @@ const ContractDetailDialog: React.FC<ContractDetailDialogProps> = ({
           <Button
             onClick={handleSave}
             disabled={isSaving || !hasChanges}
-            className="bg-orange-500 text-white hover:bg-orange-600 disabled:bg-slate-600"
           >
             Sauvegarder
           </Button>

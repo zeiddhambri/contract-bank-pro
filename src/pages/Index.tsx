@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
@@ -31,23 +30,22 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 font-sans text-white">
+    <div className="min-h-screen bg-background text-foreground">
       {/* Header */}
-      <header className="border-b border-slate-800 bg-gray-900/50 backdrop-blur-sm sticky top-0 z-40">
+      <header className="border-b sticky top-0 z-40 bg-background/95 backdrop-blur-sm">
         <div className="flex h-16 items-center justify-between px-6">
           <div className="flex items-center space-x-4">
             <Logo />
-            <h1 className="text-xl font-bold tracking-wider">
-              CONTRACT <span className="font-light text-blue-400">MANAGER</span>
+            <h1 className="text-xl font-bold">
+              Contract Manager
             </h1>
           </div>
           
           <div className="flex items-center space-x-4">
             <Button
               onClick={() => setIsCreateDialogOpen(true)}
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-medium flex items-center space-x-2 rounded-full px-5"
             >
-              <Plus className="h-4 w-4" />
+              <Plus className="h-4 w-4 mr-2" />
               <span>Nouveau Contrat</span>
             </Button>
           </div>
@@ -55,7 +53,7 @@ const Index = () => {
       </header>
 
       {/* Navigation Tabs */}
-      <nav className="border-b border-slate-800 bg-black/10 backdrop-blur-sm">
+      <nav className="border-b">
         <div className="px-6">
           <div className="flex space-x-8">
             {[
@@ -68,8 +66,8 @@ const Index = () => {
                 onClick={() => setActiveTab(tab.id)}
                 className={`py-4 px-2 border-b-2 font-medium text-sm transition-colors ${
                   activeTab === tab.id
-                    ? "border-blue-400 text-blue-300"
-                    : "border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-400"
+                    ? "border-primary text-primary"
+                    : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
                 }`}
               >
                 {tab.label}

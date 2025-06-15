@@ -1,4 +1,3 @@
-
 import {
   Card,
   CardContent,
@@ -58,14 +57,14 @@ const KpiCard = ({
   icon: React.ElementType;
   color: string;
 }) => (
-  <Card className="bg-gray-900/50 border-slate-800 p-4 transition-all hover:border-slate-700 hover:bg-gray-900">
-    <div className="flex items-center justify-between">
-      <div>
-        <p className="text-sm text-slate-400">{title}</p>
-        <p className="text-3xl font-bold text-white">{value}</p>
-      </div>
-      <Icon className={`h-8 w-8 ${color}`} />
-    </div>
+  <Card>
+    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+      <CardTitle className="text-sm font-medium">{title}</CardTitle>
+      <Icon className={`h-4 w-4 text-muted-foreground ${color}`} />
+    </CardHeader>
+    <CardContent>
+      <div className="text-2xl font-bold">{value}</div>
+    </CardContent>
   </Card>
 );
 
@@ -157,52 +156,52 @@ const DashboardStats = () => {
     };
   }, []);
 
-  if (loading) {
-    return (
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1 space-y-4">
-          {[...Array(4)].map((_, i) => (
-             <div key={i} className="animate-pulse h-24 bg-slate-800/30 rounded-lg" />
-          ))}
-        </div>
-        <div className="lg:col-span-2">
-            <div className="animate-pulse h-[400px] bg-slate-800/30 rounded-lg" />
-        </div>
-      </div>
-    );
-  }
-
-  const kpis = [
+    if (loading) {
+        return (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-1 space-y-4">
+              {[...Array(4)].map((_, i) => (
+                 <div key={i} className="animate-pulse h-24 bg-muted rounded-lg" />
+              ))}
+            </div>
+            <div className="lg:col-span-2">
+                <div className="animate-pulse h-[400px] bg-muted rounded-lg" />
+            </div>
+          </div>
+        );
+    }
+    
+    const kpis = [
     {
       title: "Contrats Actifs",
       value: statsData.activeContracts.toLocaleString(),
       icon: FileText,
-      color: "text-sky-400",
+      color: "text-sky-500",
     },
     {
       title: "En Attente Signature",
       value: statsData.pendingSignature.toLocaleString(),
       icon: Clock,
-      color: "text-indigo-400",
+      color: "text-indigo-500",
     },
     {
       title: "Alertes Actives",
       value: statsData.activeAlerts.toLocaleString(),
       icon: AlertTriangle,
-      color: "text-violet-400",
+      color: "text-violet-500",
     },
     {
       title: "Validés ce mois (MT/LT)",
       value: statsData.validatedThisMonth.toLocaleString(),
       icon: CheckCircle,
-      color: "text-emerald-400",
+      color: "text-emerald-500",
     },
-  ];
+    ];
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
       <div className="lg:col-span-1 space-y-4">
-        <h2 className="text-xl font-semibold text-white mb-2">Indicateurs Clés</h2>
+        <h2 className="text-xl font-semibold mb-2">Indicateurs Clés</h2>
         <div className="space-y-4">
            {kpis.map((kpi) => (
              <KpiCard key={kpi.title} {...kpi} />
@@ -210,9 +209,9 @@ const DashboardStats = () => {
         </div>
       </div>
       <div className="lg:col-span-2">
-        <Card className="bg-gray-900/50 border-slate-800 h-full">
+        <Card>
           <CardHeader>
-            <CardTitle className="text-white">Répartition par Statut</CardTitle>
+            <CardTitle>Répartition par Statut</CardTitle>
           </CardHeader>
           <CardContent className="h-[350px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -237,7 +236,7 @@ const DashboardStats = () => {
                       <Cell
                         key={entry.name}
                         fill={entry.fill}
-                        className="focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900 rounded-full"
+                        className="focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background rounded-full"
                       />
                     ))}
                   </Pie>
