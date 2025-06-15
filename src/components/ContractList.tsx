@@ -9,7 +9,8 @@ import { FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 
-type Contract = Tables<'contracts'>;
+// Patch: add currency as an optional property for older contracts
+type Contract = Tables<'contracts'> & { currency?: string };
 
 interface ContractListProps {
   onRefresh?: number;
@@ -32,7 +33,8 @@ const ContractList = ({ onRefresh }: ContractListProps) => {
         throw error;
       }
 
-      setContracts(data || []);
+      // Patch: force old contracts to have currency:'EUR' by default
+      setContracts((data || []).map((item) => ({ ...item, currency: item.currency || 'EUR' })));
     } catch (error) {
       console.error("Error fetching contracts:", error);
     } finally {
@@ -44,15 +46,14 @@ const ContractList = ({ onRefresh }: ContractListProps) => {
     fetchContracts();
   }, [onRefresh]);
 
-  const formatCurrency = (amount: number, currency: string) => {
+  const formatCurrency = (amount: number, currency: string | undefined) => {
     const currencySymbols = {
       EUR: '€',
       USD: '$',
       TND: 'TND'
     };
-    
-    const symbol = currencySymbols[currency as keyof typeof currencySymbols] || currency;
-    
+
+    const symbol = currencySymbols[currency as keyof typeof currencySymbols] || currency || 'EUR';
     return new Intl.NumberFormat('fr-FR', {
       style: 'decimal',
       minimumFractionDigits: 2,
