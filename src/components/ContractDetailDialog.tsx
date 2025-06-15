@@ -8,15 +8,14 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import ContractStatusSelect from "./ContractStatusSelect";
 import { toast } from "@/hooks/use-toast";
-import { AlertTriangle, Download, Paperclip } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import { Tables, TablesUpdate } from "@/integrations/supabase/types";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
-import { AGENCE_LABELS } from "@/lib/contract-helpers";
 import { supabase } from "@/integrations/supabase/client";
 import JSZip from "jszip";
+import ContractDetailForm from "./ContractDetailForm";
+import ContractFileUpload from "./ContractFileUpload";
+import ContractAlertCreator from "./ContractAlertCreator";
 
 const ALERT_TYPES = [
   {
@@ -60,7 +59,7 @@ const ContractDetailDialog: React.FC<ContractDetailDialogProps> = ({
   onSaveChanges,
   isSaving,
 }) => {
-  const [editedContract, setEditedContract] = useState(contract);
+  const [editedContract, setEditedContract] = useState<Tables<'contracts'>>(contract);
   const [selectedAlert, setSelectedAlert] = useState(ALERT_TYPES[0].value);
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -176,84 +175,24 @@ const ContractDetailDialog: React.FC<ContractDetailDialogProps> = ({
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-4">
-          <div>
-            <Label htmlFor="reference_decision" className="text-xs text-muted-foreground">Référence</Label>
-            <Input id="reference_decision" value={editedContract.reference_decision} onChange={(e) => handleFieldChange('reference_decision', e.target.value)} />
-          </div>
-          <div>
-            <Label htmlFor="client" className="text-xs text-muted-foreground">Client</Label>
-            <Input id="client" value={editedContract.client} onChange={(e) => handleFieldChange('client', e.target.value)} />
-          </div>
-           <div>
-            <Label htmlFor="montant" className="text-xs text-muted-foreground">Montant</Label>
-            <Input id="montant" type="number" value={editedContract.montant} onChange={(e) => handleFieldChange('montant', Number(e.target.value))} />
-          </div>
-          <div>
-            <Label htmlFor="date_decision" className="text-xs text-muted-foreground">Date décision</Label>
-            <Input id="date_decision" type="date" value={editedContract.date_decision?.split('T')[0] || ''} onChange={(e) => handleFieldChange('date_decision', e.target.value)} />
-          </div>
-          <div>
-             <Label htmlFor="agence" className="text-xs text-muted-foreground">Agence</Label>
-             <select id="agence" value={editedContract.agence} onChange={(e) => handleFieldChange('agence', e.target.value)} className="mt-1 block w-full rounded-md border-input bg-background py-2 px-3 shadow-sm focus:border-ring focus:outline-none focus:ring-ring sm:text-sm">
-               {Object.entries(AGENCE_LABELS).map(([value, label]) => (
-                 <option key={value} value={value}>{label}</option>
-               ))}
-             </select>
-          </div>
-          <div>
-            <div className="text-xs text-muted-foreground">Statut</div>
-            <ContractStatusSelect
-              value={editedContract.statut}
-              disabled={isSaving}
-              onChange={(v) => handleFieldChange('statut', v)}
-            />
-          </div>
-          <div>
-            <Label className="text-xs text-muted-foreground">Fichier contractuel</Label>
-            {contract.file_path && (
-              <Button asChild variant="outline" className="mt-1 w-full justify-start">
-                <a href={getFileUrl(contract.file_path)} target="_blank" rel="noopener noreferrer">
-                  <Download className="mr-2 h-4 w-4" />
-                  Télécharger le fichier actuel
-                </a>
-              </Button>
-            )}
-            <div className="mt-2 space-y-1">
-              <Label htmlFor="file-upload" className="text-sm font-medium sr-only">
-                {contract.file_path ? "Remplacer le fichier" : "Ajouter un fichier"}
-              </Label>
-              <Input
-                id="file-upload"
-                type="file"
-                onChange={handleFileChange}
-                disabled={isUploading}
-              />
-              {file && (
-                <p className="text-sm text-muted-foreground flex items-center pt-1">
-                  <Paperclip className="h-4 w-4 mr-2" /> {file.name}
-                </p>
-              )}
-               {contract.file_path && (
-                  <p className="text-xs text-muted-foreground pt-1">
-                      {file ? 'Le nouveau fichier remplacera l\'ancien lors de la sauvegarde.' : 'Vous pouvez remplacer le fichier existant.'}
-                  </p>
-              )}
-            </div>
-          </div>
-          <div>
-            <div className="text-xs text-muted-foreground mb-1">Type d’alerte</div>
-            <select
-              value={selectedAlert}
-              onChange={(e) => setSelectedAlert(e.target.value)}
-              className="w-full rounded-md border-input bg-background py-2 px-3 shadow-sm focus:border-ring focus:outline-none focus:ring-ring sm:text-sm"
-            >
-              {ALERT_TYPES.map((alert) => (
-                <option key={alert.value} value={alert.value}>
-                  {alert.label} – {alert.description(contract.reference_decision, contract.client)}
-                </option>
-              ))}
-            </select>
-          </div>
+          <ContractDetailForm
+            editedContract={editedContract}
+            handleFieldChange={handleFieldChange}
+            isSaving={isSaving}
+          />
+          <ContractFileUpload
+            filePath={contract.file_path}
+            file={file}
+            isUploading={isUploading}
+            getFileUrl={getFileUrl}
+            handleFileChange={handleFileChange}
+          />
+          <ContractAlertCreator
+            selectedAlert={selectedAlert}
+            setSelectedAlert={setSelectedAlert}
+            contract={contract}
+            alertTypes={ALERT_TYPES}
+          />
         </div>
         <DialogFooter className="flex flex-row gap-2 pt-4">
           <Button
