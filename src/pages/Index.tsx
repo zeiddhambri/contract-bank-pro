@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -7,7 +6,7 @@ import DashboardStats from "@/components/DashboardStats";
 import ContractList from "@/components/ContractList";
 import AlertsPanel from "@/components/AlertsPanel";
 import CreateContractDialog from "@/components/CreateContractDialog";
-import BankLogo from "@/components/BankLogo";
+import AppLogo from "@/components/AppLogo";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useAuth } from "@/contexts/AuthContext";
 import UserNav from "@/components/UserNav";
@@ -19,7 +18,7 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [contractsRefreshTrigger, setContractsRefreshTrigger] = useState(0);
-  const { user, bank } = useAuth();
+  const { user } = useAuth();
 
   const handleContractCreated = () => {
     setContractsRefreshTrigger(prev => prev + 1);
@@ -45,9 +44,9 @@ const Index = () => {
       <header className="border-b border-border/40 sticky top-0 z-40 bg-background/95 backdrop-blur-sm">
         <div className="flex h-16 items-center justify-between px-6">
           <div className="flex items-center space-x-4">
-            <BankLogo logoUrl={bank?.logo_url} bankName={bank?.name} />
+            <AppLogo />
             <h1 className="text-xl font-bold text-foreground">
-              {bank?.name || t('contractManager')}
+              {t('contractManager')}
             </h1>
           </div>
           <div className="flex items-center space-x-4">
@@ -65,7 +64,7 @@ const Index = () => {
           </div>
         </div>
       </header>
-      {/* Navigation Tabs */}
+      {/* ... keep existing code (Navigation Tabs, Main Content, Dialogs) */}
       <nav className="border-b border-border/40">
         <div className="px-6">
           <div className="flex space-x-8">
