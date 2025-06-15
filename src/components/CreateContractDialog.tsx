@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import ContractTypeSelect from "./ContractTypeSelect";
 
 const formSchema = z.object({
   client: z.string().min(1, "Le nom du client est requis"),
@@ -135,34 +136,16 @@ const CreateContractDialog = ({ open, onOpenChange, onContractCreated }: CreateC
                 </FormItem>
               )}
             />
+            {/* Use the extracted ContractTypeSelect component */}
             <FormField
               control={form.control}
               name="type"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Type de Contrat</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Sélectionnez le type" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="credit_immobilier">Crédit Immobilier</SelectItem>
-                      <SelectItem value="credit_consommation">Crédit à la Consommation</SelectItem>
-                      <SelectItem value="credit_auto">Crédit Auto</SelectItem>
-                      <SelectItem value="decouvert_autorise">Découvert Autorisé</SelectItem>
-                      <SelectItem value="pret_personnel">Prêt Personnel</SelectItem>
-                      <SelectItem value="ligne_credit">Ligne de crédit</SelectItem>
-                      <SelectItem value="augmentation_ligne_credit">Augmentation d'une ligne de crédit</SelectItem>
-                      <SelectItem value="diminution_ligne_credit">Diminution d'une ligne de crédit</SelectItem>
-                      <SelectItem value="operation_ponctuelle">Opération ponctuelle</SelectItem>
-                      <SelectItem value="financement_devises">Financement en devises</SelectItem>
-                      <SelectItem value="cmt">CMT</SelectItem>
-                      <SelectItem value="clt">CLT</SelectItem>
-                      <SelectItem value="cct">CCT</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FormControl>
+                    <ContractTypeSelect value={field.value} onChange={field.onChange} />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
