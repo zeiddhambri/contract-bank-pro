@@ -4,13 +4,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import {
   Form,
   FormControl,
@@ -158,251 +158,255 @@ const CreateContractDialog = ({ open, onOpenChange, onContractCreated }: CreateC
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Nouveau Contrat</DialogTitle>
-          <DialogDescription>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent className="sm:max-w-lg w-full overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle>Nouveau Contrat</SheetTitle>
+          <SheetDescription>
             Créez un nouveau contrat de financement bancaire.
-          </DialogDescription>
-        </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="client"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Client</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Nom du client" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            {/* Use the extracted ContractTypeSelect component */}
-            <FormField
-              control={form.control}
-              name="type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Type de Contrat</FormLabel>
-                  <FormControl>
-                    <ContractTypeSelect value={field.value} onChange={field.onChange} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div className="grid grid-cols-2 gap-4">
+          </SheetDescription>
+        </SheetHeader>
+        <div className="py-4">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
                 control={form.control}
-                name="montant"
+                name="client"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Montant</FormLabel>
+                    <FormLabel>Client</FormLabel>
                     <FormControl>
-                      <Input
-                        type="number"
-                        placeholder="0"
-                        {...field}
-                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                      />
+                      <Input placeholder="Nom du client" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+              {/* Use the extracted ContractTypeSelect component */}
               <FormField
                 control={form.control}
-                name="currency"
+                name="type"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Devise</FormLabel>
+                    <FormLabel>Type de Contrat</FormLabel>
+                    <FormControl>
+                      <ContractTypeSelect value={field.value} onChange={field.onChange} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="montant"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Montant</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          placeholder="0"
+                          {...field}
+                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="currency"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Devise</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Devise" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="EUR">Euro (€)</SelectItem>
+                          <SelectItem value="USD">Dollar ($)</SelectItem>
+                          <SelectItem value="TND">Dinar Tunisien (TND)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <div>
+                <FormLabel>Garanties</FormLabel>
+                <div className="space-y-4 pt-2">
+                  {fields.map((item, index) => (
+                    <div key={item.id} className="p-3 border rounded-lg space-y-3 relative bg-slate-800/50 border-slate-700">
+                      <FormField
+                        control={form.control}
+                        name={`garanties.${index}.type`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-xs">Type de Garantie {index + 1}</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Sélectionnez la garantie" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="hypotheque">Hypothèque</SelectItem>
+                                <SelectItem value="caution">Caution</SelectItem>
+                                <SelectItem value="nantissement">Nantissement</SelectItem>
+                                <SelectItem value="gage">Gage</SelectItem>
+                                <SelectItem value="aucune">Aucune</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      {watchedGaranties[index]?.type === 'hypotheque' && (
+                        <>
+                          <FormField
+                            control={form.control}
+                            name={`garanties.${index}.hypotheque_type`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-xs">Type d'hypothèque</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Sélectionnez le type" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="numero_titre">N° titre</SelectItem>
+                                    <SelectItem value="non_immatricule">Immeuble non immatriculé</SelectItem>
+                                    <SelectItem value="en_cours_immatriculation">En cours d'immatriculation</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name={`garanties.${index}.details`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-xs">Détails</FormLabel>
+                                <FormControl>
+                                  <Textarea placeholder="Entrez les détails de l'hypothèque..." {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </>
+                      )}
+                      
+                      {fields.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="absolute top-1 right-1 h-7 w-7"
+                          onClick={() => remove(index)}
+                        >
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                {fields.length < 4 && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="mt-2"
+                    onClick={() => append({ type: "", hypotheque_type: "", details: "" })}
+                  >
+                    Ajouter une garantie
+                  </Button>
+                )}
+                 <FormMessage>
+                  {form.formState.errors.garanties?.root?.message}
+                </FormMessage>
+              </div>
+
+              <FormField
+                control={form.control}
+                name="agence"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Agence</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Devise" />
+                          <SelectValue placeholder="Sélectionnez l'agence" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
-                        <SelectItem value="EUR">Euro (€)</SelectItem>
-                        <SelectItem value="USD">Dollar ($)</SelectItem>
-                        <SelectItem value="TND">Dinar Tunisien (TND)</SelectItem>
+                      <SelectContent className="max-h-60 overflow-y-auto">
+                        <SelectItem value="agence_centrale_cun">Agence Centrale CUN</SelectItem>
+                        <SelectItem value="la_marsa">La Marsa</SelectItem>
+                        <SelectItem value="aouina">Aouina</SelectItem>
+                        <SelectItem value="berges_du_lac_2">Les Berges du Lac 2</SelectItem>
+                        <SelectItem value="petite_ariana">Petite Ariana</SelectItem>
+                        <SelectItem value="ben_arous">Ben Arous</SelectItem>
+                        <SelectItem value="denden">Denden</SelectItem>
+                        <SelectItem value="ennasr">Ennasr</SelectItem>
+                        <SelectItem value="kheireddine_pacha">Kheireddine Pacha</SelectItem>
+                        <SelectItem value="bizerte">Bizerte</SelectItem>
+                        <SelectItem value="nabeul">Nabeul</SelectItem>
+                        <SelectItem value="nabeul_mrezga">Nabeul Mrezga</SelectItem>
+                        <SelectItem value="sousse">Sousse</SelectItem>
+                        <SelectItem value="monastir">Monastir</SelectItem>
+                        <SelectItem value="sfax_bostene">Sfax Bostène</SelectItem>
+                        <SelectItem value="sfax_gremda">Sfax Gremda</SelectItem>
+                        <SelectItem value="sfax_route_gabes">Sfax Route de Gabès</SelectItem>
+                        <SelectItem value="gabes">Gabès</SelectItem>
+                        <SelectItem value="medenine">Médenine</SelectItem>
+                        <SelectItem value="djerba">Djerba</SelectItem>
+                        <SelectItem value="ras_jdir">Ras Jdir</SelectItem>
+                        <SelectItem value="megrine">Mégrine</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-            </div>
-            
-            <div>
-              <FormLabel>Garanties</FormLabel>
-              <div className="space-y-4 pt-2">
-                {fields.map((item, index) => (
-                  <div key={item.id} className="p-3 border rounded-lg space-y-3 relative bg-slate-800/50 border-slate-700">
-                    <FormField
-                      control={form.control}
-                      name={`garanties.${index}.type`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-xs">Type de Garantie {index + 1}</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Sélectionnez la garantie" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="hypotheque">Hypothèque</SelectItem>
-                              <SelectItem value="caution">Caution</SelectItem>
-                              <SelectItem value="nantissement">Nantissement</SelectItem>
-                              <SelectItem value="gage">Gage</SelectItem>
-                              <SelectItem value="aucune">Aucune</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    {watchedGaranties[index]?.type === 'hypotheque' && (
-                      <>
-                        <FormField
-                          control={form.control}
-                          name={`garanties.${index}.hypotheque_type`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-xs">Type d'hypothèque</FormLabel>
-                              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Sélectionnez le type" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="numero_titre">N° titre</SelectItem>
-                                  <SelectItem value="non_immatricule">Immeuble non immatriculé</SelectItem>
-                                  <SelectItem value="en_cours_immatriculation">En cours d'immatriculation</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name={`garanties.${index}.details`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-xs">Détails</FormLabel>
-                              <FormControl>
-                                <Textarea placeholder="Entrez les détails de l'hypothèque..." {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </>
-                    )}
-                    
-                    {fields.length > 1 && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="absolute top-1 right-1 h-7 w-7"
-                        onClick={() => remove(index)}
-                      >
-                        <Trash2 className="h-4 w-4 text-red-500" />
-                      </Button>
-                    )}
-                  </div>
-                ))}
-              </div>
-              {fields.length < 4 && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="mt-2"
-                  onClick={() => append({ type: "", hypotheque_type: "", details: "" })}
-                >
-                  Ajouter une garantie
-                </Button>
-              )}
-               <FormMessage>
-                {form.formState.errors.garanties?.root?.message}
-              </FormMessage>
-            </div>
-
-            <FormField
-              control={form.control}
-              name="agence"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Agence</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description (optionnel)</FormLabel>
                     <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Sélectionnez l'agence" />
-                      </SelectTrigger>
+                      <Textarea
+                        placeholder="Détails supplémentaires..."
+                        className="resize-none"
+                        {...field}
+                      />
                     </FormControl>
-                    <SelectContent className="max-h-60 overflow-y-auto">
-                      <SelectItem value="agence_centrale_cun">Agence Centrale CUN</SelectItem>
-                      <SelectItem value="la_marsa">La Marsa</SelectItem>
-                      <SelectItem value="aouina">Aouina</SelectItem>
-                      <SelectItem value="berges_du_lac_2">Les Berges du Lac 2</SelectItem>
-                      <SelectItem value="petite_ariana">Petite Ariana</SelectItem>
-                      <SelectItem value="ben_arous">Ben Arous</SelectItem>
-                      <SelectItem value="denden">Denden</SelectItem>
-                      <SelectItem value="ennasr">Ennasr</SelectItem>
-                      <SelectItem value="kheireddine_pacha">Kheireddine Pacha</SelectItem>
-                      <SelectItem value="bizerte">Bizerte</SelectItem>
-                      <SelectItem value="nabeul">Nabeul</SelectItem>
-                      <SelectItem value="nabeul_mrezga">Nabeul Mrezga</SelectItem>
-                      <SelectItem value="sousse">Sousse</SelectItem>
-                      <SelectItem value="monastir">Monastir</SelectItem>
-                      <SelectItem value="sfax_bostene">Sfax Bostène</SelectItem>
-                      <SelectItem value="sfax_gremda">Sfax Gremda</SelectItem>
-                      <SelectItem value="sfax_route_gabes">Sfax Route de Gabès</SelectItem>
-                      <SelectItem value="gabes">Gabès</SelectItem>
-                      <SelectItem value="medenine">Médenine</SelectItem>
-                      <SelectItem value="djerba">Djerba</SelectItem>
-                      <SelectItem value="ras_jdir">Ras Jdir</SelectItem>
-                      <SelectItem value="megrine">Mégrine</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description (optionnel)</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Détails supplémentaires..."
-                      className="resize-none"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <DialogFooter>
-              <Button type="submit">Créer le Contrat</Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <SheetFooter>
+                <Button type="submit" disabled={form.formState.isSubmitting}>
+                  {form.formState.isSubmitting ? "Création en cours..." : "Créer le Contrat"}
+                </Button>
+              </SheetFooter>
+            </form>
+          </Form>
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 };
 
