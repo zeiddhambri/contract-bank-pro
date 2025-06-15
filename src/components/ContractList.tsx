@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -66,7 +65,11 @@ const ContractList = ({ onRefresh }: ContractListProps) => {
       credit_ct: "Crédit CT",
       credit_mt: "Crédit MT", 
       credit_lt: "Crédit LT",
-      credit_immobilier: "Crédit Immobilier"
+      credit_immobilier: "Crédit Immobilier",
+      credit_consommation: "Crédit à la Consommation",
+      credit_auto: "Crédit Auto",
+      decouvert_autorise: "Découvert Autorisé",
+      pret_personnel: "Prêt Personnel"
     };
     return typeLabels[type as keyof typeof typeLabels] || type;
   };
@@ -77,18 +80,36 @@ const ContractList = ({ onRefresh }: ContractListProps) => {
       nantissement: "Nantissement",
       caution: "Caution",
       gage: "Gage",
-      sans_garantie: "Sans garantie"
+      sans_garantie: "Sans garantie",
+      aucune: "Aucune"
     };
     return garantieLabels[garantie as keyof typeof garantieLabels] || garantie;
   };
 
   const getAgenceLabel = (agence: string) => {
     const agenceLabels = {
-      tunis_centre: "Tunis Centre",
-      sfax: "Sfax",
+      agence_centrale_cun: "Agence Centrale CUN",
+      la_marsa: "La Marsa",
+      aouina: "Aouina",
+      berges_du_lac_2: "Les Berges du Lac 2",
+      petite_ariana: "Petite Ariana",
+      ben_arous: "Ben Arous",
+      denden: "Denden",
+      ennasr: "Ennasr",
+      kheireddine_pacha: "Kheireddine Pacha",
+      bizerte: "Bizerte",
+      nabeul: "Nabeul",
+      nabeul_mrezga: "Nabeul Mrezga",
       sousse: "Sousse",
+      monastir: "Monastir",
+      sfax_bostene: "Sfax Bostène",
+      sfax_gremda: "Sfax Gremda",
+      sfax_route_gabes: "Sfax Route de Gabès",
       gabes: "Gabès",
-      bizerte: "Bizerte"
+      medenine: "Médenine",
+      djerba: "Djerba",
+      ras_jdir: "Ras Jdir",
+      megrine: "Mégrine"
     };
     return agenceLabels[agence as keyof typeof agenceLabels] || agence;
   };

@@ -211,12 +211,29 @@ const CreateContractDialog = ({ open, onOpenChange, onContractCreated }: CreateC
                         <SelectValue placeholder="Sélectionnez l'agence" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent>
-                      <SelectItem value="agence_centre">Agence Centre</SelectItem>
-                      <SelectItem value="agence_nord">Agence Nord</SelectItem>
-                      <SelectItem value="agence_sud">Agence Sud</SelectItem>
-                      <SelectItem value="agence_est">Agence Est</SelectItem>
-                      <SelectItem value="agence_ouest">Agence Ouest</SelectItem>
+                    <SelectContent className="max-h-60 overflow-y-auto">
+                      <SelectItem value="agence_centrale_cun">Agence Centrale CUN</SelectItem>
+                      <SelectItem value="la_marsa">La Marsa</SelectItem>
+                      <SelectItem value="aouina">Aouina</SelectItem>
+                      <SelectItem value="berges_du_lac_2">Les Berges du Lac 2</SelectItem>
+                      <SelectItem value="petite_ariana">Petite Ariana</SelectItem>
+                      <SelectItem value="ben_arous">Ben Arous</SelectItem>
+                      <SelectItem value="denden">Denden</SelectItem>
+                      <SelectItem value="ennasr">Ennasr</SelectItem>
+                      <SelectItem value="kheireddine_pacha">Kheireddine Pacha</SelectItem>
+                      <SelectItem value="bizerte">Bizerte</SelectItem>
+                      <SelectItem value="nabeul">Nabeul</SelectItem>
+                      <SelectItem value="nabeul_mrezga">Nabeul Mrezga</SelectItem>
+                      <SelectItem value="sousse">Sousse</SelectItem>
+                      <SelectItem value="monastir">Monastir</SelectItem>
+                      <SelectItem value="sfax_bostene">Sfax Bostène</SelectItem>
+                      <SelectItem value="sfax_gremda">Sfax Gremda</SelectItem>
+                      <SelectItem value="sfax_route_gabes">Sfax Route de Gabès</SelectItem>
+                      <SelectItem value="gabes">Gabès</SelectItem>
+                      <SelectItem value="medenine">Médenine</SelectItem>
+                      <SelectItem value="djerba">Djerba</SelectItem>
+                      <SelectItem value="ras_jdir">Ras Jdir</SelectItem>
+                      <SelectItem value="megrine">Mégrine</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
