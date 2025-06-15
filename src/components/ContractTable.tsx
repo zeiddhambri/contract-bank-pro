@@ -51,32 +51,32 @@ const ContractTable: React.FC<ContractTableProps> = ({
   }
   return (
     <>
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto rounded-lg border border-slate-800 bg-gray-900/30">
         <Table>
           <TableHeader>
-            <TableRow className="border-slate-700 hover:bg-slate-800/50">
-              <TableHead className="text-slate-300 font-medium">Référence Décision</TableHead>
-              <TableHead className="text-slate-300 font-medium">Client</TableHead>
-              <TableHead className="text-slate-300 font-medium">Type</TableHead>
-              <TableHead className="text-slate-300 font-medium">Montant</TableHead>
-              <TableHead className="text-slate-300 font-medium">Garantie</TableHead>
-              <TableHead className="text-slate-300 font-medium">Statut</TableHead>
-              <TableHead className="text-slate-300 font-medium">Agence</TableHead>
-              <TableHead className="text-slate-300 font-medium">Date décision</TableHead>
-              <TableHead className="text-slate-300 font-medium">Actions</TableHead>
+            <TableRow className="border-slate-800 hover:bg-slate-800/50">
+              <TableHead className="text-slate-400 font-medium">Référence Décision</TableHead>
+              <TableHead className="text-slate-400 font-medium">Client</TableHead>
+              <TableHead className="text-slate-400 font-medium">Type</TableHead>
+              <TableHead className="text-slate-400 font-medium">Montant</TableHead>
+              <TableHead className="text-slate-400 font-medium">Garantie</TableHead>
+              <TableHead className="text-slate-400 font-medium">Statut</TableHead>
+              <TableHead className="text-slate-400 font-medium">Agence</TableHead>
+              <TableHead className="text-slate-400 font-medium">Date décision</TableHead>
+              <TableHead className="text-slate-400 font-medium">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {contracts.map((contract) => (
-              <TableRow key={contract.id} className="border-slate-700 hover:bg-slate-800/30 transition-colors">
+              <TableRow key={contract.id} className="border-slate-800 hover:bg-slate-800/40 transition-colors">
                 <TableCell className="font-medium text-white">{contract.reference_decision}</TableCell>
                 <TableCell className="text-slate-300">{contract.client}</TableCell>
                 <TableCell>
-                  <Badge variant="outline" className="border-slate-600 text-slate-300">
+                  <Badge variant="outline" className="border-slate-700 text-slate-300 bg-slate-800/60">
                     {getTypeLabel(contract.type)}
                   </Badge>
                 </TableCell>
-                <TableCell className="font-semibold text-orange-400">
+                <TableCell className="font-semibold text-blue-400">
                   {formatCurrency(contract.montant)}
                 </TableCell>
                 <TableCell className="text-slate-300">{getGarantieLabel(contract.garantie)}</TableCell>
@@ -93,7 +93,7 @@ const ContractTable: React.FC<ContractTableProps> = ({
                   <Button
                     variant="outline"
                     size="sm"
-                    className="border-orange-500/30 text-orange-400 hover:bg-orange-500/20 hover:text-orange-300"
+                    className="border-blue-500/30 text-blue-400 hover:bg-blue-500/20 hover:text-blue-300 transition-all duration-200"
                     onClick={() => handleVoirDetails(contract)}
                   >
                     Voir détails

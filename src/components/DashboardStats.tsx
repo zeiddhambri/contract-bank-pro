@@ -1,3 +1,4 @@
+
 import {
   Card,
   CardContent,
@@ -9,13 +10,10 @@ import {
   Clock,
   AlertTriangle,
   CheckCircle,
-  DollarSign,
-  TrendingUp,
-  ArrowDown,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { PieChart, Pie, Cell } from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import {
   ChartConfig,
   ChartContainer,
@@ -33,22 +31,18 @@ const STATUT_OPTIONS: Record<string, string> = {
   alerte: "Alerte",
 };
 
-const getStatutLabel = (statut: string) => {
-  return STATUT_OPTIONS[statut] || statut;
-};
-
-const STATUS_COLORS: Record<string, string> = {
-  en_cours: "hsl(var(--chart-1))",
-  attente_signature: "hsl(var(--chart-2))",
-  valide: "hsl(var(--chart-3))",
-  refuse: "hsl(var(--chart-4))",
-  alerte: "hsl(var(--chart-5))",
+const STATUS_COLORS = {
+  en_cours: "hsl(210 90% 60%)",
+  attente_signature: "hsl(260 85% 65%)",
+  valide: "hsl(140 80% 60%)",
+  refuse: "hsl(0 80% 65%)",
+  alerte: "hsl(320 80% 65%)",
 };
 
 const chartConfig = Object.keys(STATUT_OPTIONS).reduce((acc, key) => {
   acc[key] = {
     label: STATUT_OPTIONS[key],
-    color: STATUS_COLORS[key],
+    color: STATUS_COLORS[key as keyof typeof STATUS_COLORS],
   };
   return acc;
 }, {} as ChartConfig);
@@ -64,7 +58,7 @@ const KpiCard = ({
   icon: React.ElementType;
   color: string;
 }) => (
-  <Card className="bg-slate-800/50 border-slate-700/50 p-4">
+  <Card className="bg-gray-900/50 border-slate-800 p-4 transition-all hover:border-slate-700 hover:bg-gray-900">
     <div className="flex items-center justify-between">
       <div>
         <p className="text-sm text-slate-400">{title}</p>
@@ -82,8 +76,6 @@ const DashboardStats = () => {
     pendingSignature: 0,
     activeAlerts: 0,
     validatedThisMonth: 0,
-    totalVolume: 0,
-    creditMTLT: 0,
     statusDistribution: [] as ({ name: string; value: number; fill: string })[],
   });
 
@@ -103,12 +95,10 @@ const DashboardStats = () => {
       const currentMonth = now.getMonth();
       const currentYear = now.getFullYear();
 
-      let totalVolume = 0;
       let activeContracts = 0;
       let pendingSignature = 0;
       let activeAlerts = 0;
       let validatedThisMonth = 0;
-      let creditMTLT = 0;
 
       const statusCounts = data.reduce(
         (acc, contract) => {
@@ -124,9 +114,6 @@ const DashboardStats = () => {
       data.forEach((row) => {
         const statut = row.statut;
         const type = row.type;
-        const montant = Number(row.montant) || 0;
-        totalVolume += montant;
-
         if (statut === "en_cours") activeContracts += 1;
         if (statut === "attente_signature") pendingSignature += 1;
         if (statut === "alerte") activeAlerts += 1;
@@ -143,20 +130,13 @@ const DashboardStats = () => {
           )
             validatedThisMonth += 1;
         }
-
-        if (
-          (type === "credit_mt" || type === "credit_lt") &&
-          (statut === "valide" || statut === "en_cours")
-        ) {
-          creditMTLT += montant;
-        }
       });
       
       const statusDistribution = Object.entries(statusCounts).map(
         ([name, value]) => ({
           name,
           value,
-          fill: STATUS_COLORS[name] || "#8884d8",
+          fill: STATUS_COLORS[name as keyof typeof STATUS_COLORS] || "#8884d8",
         })
       );
 
@@ -166,8 +146,6 @@ const DashboardStats = () => {
           pendingSignature,
           activeAlerts,
           validatedThisMonth,
-          totalVolume,
-          creditMTLT,
           statusDistribution,
         });
         setLoading(false);
@@ -184,11 +162,11 @@ const DashboardStats = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1 space-y-4">
           {[...Array(4)].map((_, i) => (
-             <div key={i} className="animate-pulse h-24 bg-slate-700/30 rounded-lg" />
+             <div key={i} className="animate-pulse h-24 bg-slate-800/30 rounded-lg" />
           ))}
         </div>
         <div className="lg:col-span-2">
-            <div className="animate-pulse h-[400px] bg-slate-700/30 rounded-lg" />
+            <div className="animate-pulse h-[400px] bg-slate-800/30 rounded-lg" />
         </div>
       </div>
     );
@@ -199,48 +177,45 @@ const DashboardStats = () => {
       title: "Contrats Actifs",
       value: statsData.activeContracts.toLocaleString(),
       icon: FileText,
-      color: "text-blue-400",
+      color: "text-sky-400",
     },
     {
       title: "En Attente Signature",
       value: statsData.pendingSignature.toLocaleString(),
       icon: Clock,
-      color: "text-orange-400",
+      color: "text-indigo-400",
     },
     {
       title: "Alertes Actives",
       value: statsData.activeAlerts.toLocaleString(),
       icon: AlertTriangle,
-      color: "text-red-400",
+      color: "text-violet-400",
     },
     {
       title: "Validés ce mois (MT/LT)",
       value: statsData.validatedThisMonth.toLocaleString(),
       icon: CheckCircle,
-      color: "text-green-400",
+      color: "text-emerald-400",
     },
   ];
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
       <div className="lg:col-span-1 space-y-4">
-        <h2 className="text-xl font-bold text-white">Indicateurs de Performance</h2>
-        <div className="space-y-2">
-           {kpis.map((kpi, index) => (
-             <React.Fragment key={kpi.title}>
-              <KpiCard {...kpi} />
-              {index < kpis.length - 1 && <ArrowDown className="mx-auto h-6 w-6 text-slate-600" />}
-             </React.Fragment>
+        <h2 className="text-xl font-semibold text-white mb-2">Indicateurs Clés</h2>
+        <div className="space-y-4">
+           {kpis.map((kpi) => (
+             <KpiCard key={kpi.title} {...kpi} />
            ))}
         </div>
       </div>
-      <div className="lg:col-span-2 space-y-6">
-        <Card className="bg-black/40 border-slate-700/50 backdrop-blur-sm">
+      <div className="lg:col-span-2">
+        <Card className="bg-gray-900/50 border-slate-800 h-full">
           <CardHeader>
             <CardTitle className="text-white">Répartition par Statut</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="h-[350px] w-full">
+          <CardContent className="h-[350px]">
+            <ResponsiveContainer width="100%" height="100%">
               <ChartContainer
                 config={chartConfig}
                 className="mx-auto aspect-square h-full"
@@ -256,21 +231,23 @@ const DashboardStats = () => {
                     nameKey="name"
                     innerRadius="65%"
                     strokeWidth={5}
+                    stroke="hsl(var(--background))"
                   >
                     {statsData.statusDistribution.map((entry) => (
                       <Cell
                         key={entry.name}
                         fill={entry.fill}
-                        className="focus:outline-none"
+                        className="focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900 rounded-full"
                       />
                     ))}
                   </Pie>
                   <ChartLegend
                     content={<ChartLegendContent nameKey="name" />}
+                    className="!text-sm"
                   />
                 </PieChart>
               </ChartContainer>
-            </div>
+            </ResponsiveContainer>
           </CardContent>
         </Card>
       </div>

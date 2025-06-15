@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,19 +18,17 @@ const fetchContracts = async () => {
 const ContractList: React.FC = () => {
   const queryClient = useQueryClient();
 
-  const { data: contracts, isLoading } = useQuery<Tables<'contracts', 'Row'>[]>({
+  const { data: contracts, isLoading } = useQuery<Tables<'contracts'>[]>({
     queryKey: ["contracts"],
     queryFn: fetchContracts,
   });
 
-  const updateContractMutation = useMutation({
-    mutationFn: async ({
-      contractId,
-      updates,
-    }: {
-      contractId: string;
-      updates: Partial<TablesUpdate<'contracts'>>;
-    }) => {
+  const updateContractMutation = useMutation<
+    void,
+    Error,
+    { contractId: string; updates: Partial<TablesUpdate<'contracts'>> }
+  >({
+    mutationFn: async ({ contractId, updates }) => {
       const { error } = await supabase
         .from("contracts")
         .update(updates)
@@ -43,13 +42,11 @@ const ContractList: React.FC = () => {
         description: "Contrat mis à jour.",
       });
     },
-    meta: {
-      onError: (error: any) => {
-        toast({
-          title: "Erreur",
-          description: error?.message || "Impossible de mettre à jour le contrat.",
-        });
-      },
+    onError: (error: any) => {
+      toast({
+        title: "Erreur",
+        description: error?.message || "Impossible de mettre à jour le contrat.",
+      });
     },
   });
 
