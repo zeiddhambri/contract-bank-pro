@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import {
   Table,
@@ -18,13 +19,26 @@ import {
   getGarantieLabel,
   getTypeLabel,
 } from "@/lib/contract-helpers";
-import { Tables } from "@/integrations/supabase/types";
+import { Tables, TablesUpdate } from "@/integrations/supabase/types";
+import { Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface ContractTableProps {
-  contracts: Tables<'contracts', 'Row'>[];
+  contracts: Tables<'contracts'>[];
   isLoading: boolean;
   updatingContractId: string | null;
-  handleContractUpdate: (contractId: string, updates: Partial<Tables<'contracts', 'Update'>>) => Promise<void>;
+  handleContractUpdate: (contractId: string, updates: Partial<TablesUpdate<'contracts'>>) => Promise<void>;
+  handleContractDelete: (contractId: string) => Promise<void>;
 }
 
 const ContractTable: React.FC<ContractTableProps> = ({
@@ -32,11 +46,12 @@ const ContractTable: React.FC<ContractTableProps> = ({
   isLoading,
   updatingContractId,
   handleContractUpdate,
+  handleContractDelete,
 }) => {
-  const [selectedContract, setSelectedContract] = useState<Tables<'contracts', 'Row'> | null>(null);
+  const [selectedContract, setSelectedContract] = useState<Tables<'contracts'> | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  const handleVoirDetails = (contract: Tables<'contracts', 'Row'>) => {
+  const handleVoirDetails = (contract: Tables<'contracts'>) => {
     setSelectedContract(contract);
     setDialogOpen(true);
   };
@@ -89,13 +104,45 @@ const ContractTable: React.FC<ContractTableProps> = ({
                 <TableCell>{getAgenceLabel(contract.agence)}</TableCell>
                 <TableCell>{formatDate(contract.date_decision)}</TableCell>
                 <TableCell>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleVoirDetails(contract)}
-                  >
-                    Voir détails
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleVoirDetails(contract)}
+                      disabled={updatingContractId === contract.id}
+                    >
+                      Voir détails
+                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-destructive hover:text-destructive/90"
+                          disabled={updatingContractId === contract.id}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Êtes-vous sûr?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Cette action est irréversible. Le contrat sera définitivement supprimé.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Annuler</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => handleContractDelete(contract.id)}
+                            className="bg-destructive hover:bg-destructive/90"
+                          >
+                            Supprimer
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}

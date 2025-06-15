@@ -1,9 +1,10 @@
+
 import React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import ContractTable from "./ContractTable";
-import { Tables } from "@/integrations/supabase/types";
+import { Tables, TablesUpdate } from "@/integrations/supabase/types";
 
 const fetchContracts = async () => {
   let { data, error } = await supabase
@@ -25,7 +26,7 @@ const ContractList: React.FC = () => {
   const updateContractMutation = useMutation<
     void,
     Error,
-    { contractId: string; updates: Partial<Tables<'contracts'>> }
+    { contractId: string; updates: Partial<TablesUpdate<'contracts'>> }
   >({
     mutationFn: async ({ contractId, updates }) => {
       const { error } = await supabase
@@ -49,20 +50,53 @@ const ContractList: React.FC = () => {
     },
   });
 
-  const handleContractUpdate = async (contractId: string, updates: Partial<Tables<'contracts'>>) => {
+  const deleteContractMutation = useMutation<
+    void,
+    Error,
+    { contractId: string }
+  >({
+    mutationFn: async ({ contractId }) => {
+      const { error } = await supabase
+        .from("contracts")
+        .delete()
+        .eq("id", contractId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["contracts"] });
+      toast({
+        title: "Succès",
+        description: "Contrat supprimé avec succès.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erreur",
+        description: error?.message || "Impossible de supprimer le contrat.",
+      });
+    },
+  });
+
+  const handleContractUpdate = async (contractId: string, updates: Partial<TablesUpdate<'contracts'>>) => {
     await updateContractMutation.mutateAsync({ contractId, updates });
   };
+
+  const handleContractDelete = async (contractId: string) => {
+    await deleteContractMutation.mutateAsync({ contractId });
+  };
+
+  const mutatingContractId =
+    (updateContractMutation.isPending && updateContractMutation.variables?.contractId) ||
+    (deleteContractMutation.isPending && deleteContractMutation.variables?.contractId) ||
+    null;
 
   return (
     <ContractTable
       contracts={contracts || []}
       isLoading={isLoading}
-      updatingContractId={
-        updateContractMutation.isPending && updateContractMutation.variables
-          ? updateContractMutation.variables.contractId
-          : null
-      }
+      updatingContractId={mutatingContractId}
       handleContractUpdate={handleContractUpdate}
+      handleContractDelete={handleContractDelete}
     />
   );
 };

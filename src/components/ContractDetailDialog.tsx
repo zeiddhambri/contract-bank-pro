@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import {
   Dialog,
@@ -10,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import ContractStatusSelect from "./ContractStatusSelect";
 import { toast } from "@/hooks/use-toast";
 import { AlertTriangle } from "lucide-react";
-import { Tables } from "@/integrations/supabase/types";
+import { Tables, TablesUpdate } from "@/integrations/supabase/types";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { AGENCE_LABELS } from "@/lib/contract-helpers";
@@ -45,8 +46,8 @@ const ALERT_TYPES = [
 interface ContractDetailDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  contract: Tables<'contracts', 'Row'>;
-  onSaveChanges: (contractId: string, updates: Partial<Tables<'contracts', 'Update'>>) => Promise<void>;
+  contract: Tables<'contracts'>;
+  onSaveChanges: (contractId: string, updates: Partial<TablesUpdate<'contracts'>>) => Promise<void>;
   isSaving: boolean;
 }
 
@@ -66,12 +67,12 @@ const ContractDetailDialog: React.FC<ContractDetailDialogProps> = ({
     }
   }, [contract, open]);
 
-  const handleFieldChange = (field: keyof Tables<'contracts', 'Update'>, value: any) => {
+  const handleFieldChange = (field: keyof TablesUpdate<'contracts'>, value: any) => {
     setEditedContract(prev => ({ ...prev, [field]: value as any }));
   };
   
   const getChangedFields = () => {
-    const changes: Partial<Tables<'contracts', 'Update'>> = {};
+    const changes: Partial<TablesUpdate<'contracts'>> = {};
     if (editedContract.client !== contract.client) {
       changes.client = editedContract.client;
     }
