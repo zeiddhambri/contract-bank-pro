@@ -1,4 +1,6 @@
+
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import DashboardStats from "@/components/DashboardStats";
@@ -6,7 +8,10 @@ import ContractList from "@/components/ContractList";
 import AlertsPanel from "@/components/AlertsPanel";
 import CreateContractDialog from "@/components/CreateContractDialog";
 import Logo from "@/components/Logo";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
+
 const Index = () => {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState("dashboard");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [contractsRefreshTrigger, setContractsRefreshTrigger] = useState(0);
@@ -32,15 +37,16 @@ const Index = () => {
           <div className="flex items-center space-x-4">
             <Logo />
             <h1 className="text-xl font-bold">
-              Contract Manager
+              {t('contractManager')}
             </h1>
           </div>
           
           <div className="flex items-center space-x-4">
             <Button onClick={() => setIsCreateDialogOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
-              <span>Nouveau Contrat</span>
+              <span>{t('newContract')}</span>
             </Button>
+            <LanguageSwitcher />
           </div>
         </div>
       </header>
@@ -51,13 +57,13 @@ const Index = () => {
           <div className="flex space-x-8 bg-blue-100 rounded-md">
             {[{
             id: "dashboard",
-            label: "Tableau de Bord"
+            label: t("dashboard")
           }, {
             id: "contracts",
-            label: "Contrats"
+            label: t("contracts")
           }, {
             id: "alerts",
-            label: "Alertes"
+            label: t("alerts")
           }].map(tab => <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`py-4 px-2 border-b-2 font-medium text-sm transition-colors ${activeTab === tab.id ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"}`}>
                 {tab.label}
               </button>)}
