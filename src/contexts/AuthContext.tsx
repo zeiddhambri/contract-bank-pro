@@ -9,6 +9,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   userProfile: Tables<'profiles'> | null;
+  bank: Tables<'banks'> | null;
   userRole: Tables<'profiles'>['role'] | null;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string) => Promise<{ error: any }>;
@@ -32,6 +33,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [userProfile, setUserProfile] = useState<Tables<'profiles'> | null>(null);
+  const [bank, setBank] = useState<Tables<'banks'> | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
@@ -49,12 +51,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (currentUser) {
         const { data: profile } = await supabase
           .from('profiles')
-          .select('*')
+          .select('*, banks(*)')
           .eq('id', currentUser.id)
           .single();
-        setUserProfile(profile || null);
+        
+        if (profile) {
+          const { banks: bankData, ...userProfileData } = profile as any;
+          setUserProfile(userProfileData);
+          setBank(bankData);
+        } else {
+          setUserProfile(null);
+          setBank(null);
+        }
       } else {
         setUserProfile(null);
+        setBank(null);
       }
       setLoading(false);
     };
@@ -70,12 +81,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (event === 'SIGNED_IN' && currentUser) {
           const { data: profile } = await supabase
             .from('profiles')
-            .select('*')
+            .select('*, banks(*)')
             .eq('id', currentUser.id)
             .single();
-          setUserProfile(profile || null);
+          
+          if (profile) {
+            const { banks: bankData, ...userProfileData } = profile as any;
+            setUserProfile(userProfileData);
+            setBank(bankData);
+          } else {
+            setUserProfile(null);
+            setBank(null);
+          }
         } else if (event === 'SIGNED_OUT') {
           setUserProfile(null);
+          setBank(null);
         }
       }
     );
@@ -137,6 +157,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { error } = await supabase.auth.signOut();
     if (!error) {
       setUserProfile(null);
+      setBank(null);
       toast({
         title: "Déconnexion réussie",
         description: "À bientôt !",
@@ -171,6 +192,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     user,
     session,
     userProfile,
+    bank,
     userRole,
     signIn,
     signUp,

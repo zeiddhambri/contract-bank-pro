@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -6,7 +7,7 @@ import DashboardStats from "@/components/DashboardStats";
 import ContractList from "@/components/ContractList";
 import AlertsPanel from "@/components/AlertsPanel";
 import CreateContractDialog from "@/components/CreateContractDialog";
-import Logo from "@/components/Logo";
+import BankLogo from "@/components/BankLogo";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useAuth } from "@/contexts/AuthContext";
 import UserNav from "@/components/UserNav";
@@ -18,7 +19,7 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [contractsRefreshTrigger, setContractsRefreshTrigger] = useState(0);
-  const { user } = useAuth();
+  const { user, bank } = useAuth();
   const handleContractCreated = () => {
     setContractsRefreshTrigger(prev => prev + 1);
   };
@@ -40,16 +41,19 @@ const Index = () => {
     <div className="min-h-screen bg-background text-foreground">
       {/* Header */}
       <header className="border-b sticky top-0 z-40 bg-background/95 backdrop-blur-sm">
-        <div className="flex h-16 items-center justify-between px-6 bg-teal-500">
+        <div 
+          className="flex h-16 items-center justify-between px-6 text-white"
+          style={{ backgroundColor: bank?.primary_color || '#14b8a6' }}
+        >
           <div className="flex items-center space-x-4">
-            <Logo />
+            <BankLogo logoUrl={bank?.logo_url} bankName={bank?.name} />
             <h1 className="text-xl font-bold">
-              {t('contractManager')}
+              {bank?.name || t('contractManager')}
             </h1>
           </div>
           <div className="flex items-center space-x-4">
             {user && (
-              <Button onClick={() => setIsCreateDialogOpen(true)}>
+              <Button onClick={() => setIsCreateDialogOpen(true)} variant="secondary">
                 <Plus className="h-4 w-4 mr-2" />
                 <span>{t('newContract')}</span>
               </Button>
