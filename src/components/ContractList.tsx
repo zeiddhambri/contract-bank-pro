@@ -159,7 +159,7 @@ const ContractList = ({ onRefresh }: ContractListProps) => {
       toast({
         title: "Statut mis à jour",
         description: "Le statut du contrat a bien été modifié.",
-        icon: check,
+        // Remove icon for compatibility
       });
       fetchContracts();
     } catch (error) {
@@ -222,74 +222,18 @@ const ContractList = ({ onRefresh }: ContractListProps) => {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow className="border-slate-700 hover:bg-slate-800/50">
-                <TableHead className="text-slate-300 font-medium">Référence Décision</TableHead>
-                <TableHead className="text-slate-300 font-medium">Client</TableHead>
-                <TableHead className="text-slate-300 font-medium">Type</TableHead>
-                <TableHead className="text-slate-300 font-medium">Montant</TableHead>
-                <TableHead className="text-slate-300 font-medium">Garantie</TableHead>
-                <TableHead className="text-slate-300 font-medium">Statut</TableHead>
-                <TableHead className="text-slate-300 font-medium">Agence</TableHead>
-                <TableHead className="text-slate-300 font-medium">Date décision</TableHead>
-                <TableHead className="text-slate-300 font-medium">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredContracts.map((contract) => (
-                <TableRow key={contract.id} className="border-slate-700 hover:bg-slate-800/30 transition-colors">
-                  <TableCell className="font-medium text-white">{contract.reference_decision}</TableCell>
-                  <TableCell className="text-slate-300">{contract.client}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className="border-slate-600 text-slate-300">
-                      {getTypeLabel(contract.type)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="font-semibold text-orange-400">
-                    {formatCurrency(contract.montant)}
-                  </TableCell>
-                  <TableCell className="text-slate-300">{getGarantieLabel(contract.garantie)}</TableCell>
-                  {/* Statut : désormais éditable */}
-                  <TableCell>
-                    <Select
-                      value={contract.statut}
-                      onValueChange={(v) => handleStatusChange(contract.id, v)}
-                      disabled={statusLoadingId === contract.id}
-                    >
-                      <SelectTrigger
-                        className={`min-w-[120px] border ${getStatusBadgeClass(contract.statut)} px-2 py-1 text-sm font-medium`}
-                      >
-                        <SelectValue>
-                          {STATUS_OPTIONS.find(opt => opt.value === contract.statut)?.label || contract.statut}
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent className="bg-black border-slate-600 z-50">
-                        {STATUS_OPTIONS.map(opt => (
-                          <SelectItem key={opt.value} value={opt.value} className="text-white">
-                            {opt.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
-                  <TableCell className="text-slate-300">{getAgenceLabel(contract.agence)}</TableCell>
-                  <TableCell className="text-slate-300">{formatDate(contract.date_decision)}</TableCell>
-                  <TableCell>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      className="border-orange-500/30 text-orange-400 hover:bg-orange-500/20 hover:text-orange-300"
-                    >
-                      Voir détails
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+        <ContractTable
+          contracts={filteredContracts}
+          isLoading={isLoading}
+          statusLoadingId={statusLoadingId}
+          handleStatusChange={handleStatusChange}
+          getTypeLabel={getTypeLabel}
+          getGarantieLabel={getGarantieLabel}
+          getStatusBadgeClass={getStatusBadgeClass}
+          getAgenceLabel={getAgenceLabel}
+          formatDate={formatDate}
+          formatCurrency={formatCurrency}
+        />
       </CardContent>
     </Card>
   );
