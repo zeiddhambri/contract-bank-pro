@@ -52,7 +52,7 @@ const Index = () => {
           </div>
           <div className="flex items-center space-x-4">
             {user && (
-              <Button onClick={() => setIsCreateDialogOpen(true)}>
+              <Button onClick={() => setIsCreateDialogOpen(true)} className="transition-transform duration-200 hover:scale-105">
                 <Plus className="h-4 w-4 mr-2" />
                 <span>{t('newContract')}</span>
               </Button>
@@ -77,10 +77,10 @@ const Index = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors
+                className={`py-4 px-1 border-b-2 font-medium text-sm transition-all duration-200
                   ${activeTab === tab.id
                     ? 'border-primary text-primary'
-                    : 'border-transparent text-muted-foreground hover:text-foreground'
+                    : 'border-transparent text-muted-foreground hover:text-foreground hover:border-primary/50'
                   }`}
               >
                 {tab.label}
@@ -92,7 +92,9 @@ const Index = () => {
 
       {/* Main Content */}
       <main className="p-6">
-        {renderContent()}
+        <div key={activeTab} className="animate-fade-in-up">
+          {renderContent()}
+        </div>
       </main>
 
       {/* Dialogue de création de contrat */}

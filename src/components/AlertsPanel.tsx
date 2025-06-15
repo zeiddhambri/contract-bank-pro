@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -107,7 +108,7 @@ const AlertsPanel = () => {
             {alerts.map((alert) => (
               <div
                 key={alert.id}
-                className="flex items-start space-x-4 p-4 border border-border rounded-lg hover:bg-accent transition-colors"
+                className="flex items-start space-x-4 p-4 border border-border rounded-lg hover:bg-accent transition-all duration-200 hover:-translate-y-0.5"
               >
                 <div className="flex-shrink-0 mt-1 p-2 bg-background rounded-full">
                   {getAlertIcon(alert.type)}
