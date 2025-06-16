@@ -15,11 +15,11 @@ const STATUT_OPTIONS: Record<string, string> = {
 };
 
 const STATUS_COLORS = {
-  en_cours: "hsl(205 90% 55%)",
-  attente_signature: "hsl(35 95% 55%)",
-  valide: "hsl(145 65% 45%)",
-  refuse: "hsl(0 85% 60%)",
-  alerte: "hsl(300 75% 60%)",
+  en_cours: "#3B82F6",
+  attente_signature: "#F59E0B",
+  valide: "#10B981",
+  refuse: "#EF4444",
+  alerte: "#8B5CF6",
 };
 
 const chartConfig = Object.keys(STATUT_OPTIONS).reduce((acc, key) => {
@@ -39,13 +39,13 @@ const KpiCard = ({
   value: string | number;
   icon: React.ElementType;
 }) => (
-  <Card className="transform transition-transform duration-300 hover:-translate-y-1">
+  <Card className="bg-black/40 border-slate-700/50 backdrop-blur-sm transform transition-all duration-300 hover:-translate-y-1 hover:border-orange-600/30">
     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-      <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
-      <Icon className="h-5 w-5 text-primary" />
+      <CardTitle className="text-sm font-medium text-slate-300">{title}</CardTitle>
+      <Icon className="h-5 w-5 text-orange-500" />
     </CardHeader>
     <CardContent>
-      <div className="text-4xl font-bold">{value}</div>
+      <div className="text-4xl font-bold text-white">{value}</div>
     </CardContent>
   </Card>
 );
@@ -151,12 +151,12 @@ const DashboardStats = () => {
       <div className="space-y-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="animate-pulse h-32 bg-card rounded-xl" />
+            <div key={i} className="animate-pulse h-32 bg-black/20 border border-slate-700/50 rounded-xl" />
           ))}
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-          <div className="lg:col-span-3 animate-pulse h-[400px] bg-card rounded-xl" />
-          <div className="lg:col-span-2 animate-pulse h-[400px] bg-card rounded-xl" />
+          <div className="lg:col-span-3 animate-pulse h-[400px] bg-black/20 border border-slate-700/50 rounded-xl" />
+          <div className="lg:col-span-2 animate-pulse h-[400px] bg-black/20 border border-slate-700/50 rounded-xl" />
         </div>
       </div>
     );
@@ -177,54 +177,70 @@ const DashboardStats = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
         <div className="lg:col-span-3">
-          <Card className="h-full">
+          <Card className="h-full bg-black/40 border-slate-700/50 backdrop-blur-sm">
             <CardHeader>
-              <CardTitle className="text-lg">Répartition par Statut</CardTitle>
+              <CardTitle className="text-lg text-white">Répartition par Statut</CardTitle>
             </CardHeader>
             <CardContent className="h-[350px] relative">
               <ResponsiveContainer width="100%" height="100%">
                 <ChartContainer config={chartConfig} className="mx-auto aspect-square h-full">
                   <PieChart>
-                    <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
-                    <Pie data={statsData.statusDistribution} dataKey="value" nameKey="name" innerRadius="70%" strokeWidth={5} stroke="hsl(var(--background))">
+                    <ChartTooltip 
+                      cursor={false} 
+                      content={<ChartTooltipContent hideLabel className="bg-black/90 border-slate-700 text-white" />} 
+                    />
+                    <Pie 
+                      data={statsData.statusDistribution} 
+                      dataKey="value" 
+                      nameKey="name" 
+                      innerRadius="70%" 
+                      strokeWidth={2} 
+                      stroke="#1e293b"
+                    >
                       {statsData.statusDistribution.map(entry => (
-                        <Cell key={entry.name} fill={entry.fill} className="focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background rounded-full" />
+                        <Cell 
+                          key={entry.name} 
+                          fill={entry.fill} 
+                          className="focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:ring-offset-slate-900 rounded-full hover:opacity-80 transition-opacity" 
+                        />
                       ))}
                     </Pie>
-                    <ChartLegend content={<ChartLegendContent nameKey="name" className="!text-sm text-muted-foreground flex-wrap justify-center" />} />
+                    <ChartLegend 
+                      content={<ChartLegendContent nameKey="name" className="!text-sm text-slate-300 flex-wrap justify-center" />} 
+                    />
                   </PieChart>
                 </ChartContainer>
               </ResponsiveContainer>
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[60%] text-center pointer-events-none">
-                <p className="text-4xl font-bold">{statsData.totalContracts}</p>
-                <p className="text-sm text-muted-foreground">Contrats</p>
+                <p className="text-4xl font-bold text-white">{statsData.totalContracts}</p>
+                <p className="text-sm text-slate-300">Contrats</p>
               </div>
             </CardContent>
           </Card>
         </div>
 
         <div className="lg:col-span-2 space-y-8">
-          <Card className="bg-gradient-to-br from-primary/10 to-background/30 border-primary/20 hover:border-primary/40 transition-all">
+          <Card className="bg-gradient-to-br from-orange-600/20 to-red-600/10 border-orange-600/30 hover:border-orange-500/50 transition-all backdrop-blur-sm">
             <CardContent className="p-6 flex items-center justify-between">
               <div>
-                <p className="text-sm text-primary/80">Volume Total</p>
-                <p className="text-3xl font-bold text-foreground mt-1">{formatCurrency(statsData.totalVolume)}</p>
-                <p className="text-xs text-muted-foreground mt-1">Engagements en cours</p>
+                <p className="text-sm text-orange-300">Volume Total</p>
+                <p className="text-3xl font-bold text-white mt-1">{formatCurrency(statsData.totalVolume)}</p>
+                <p className="text-xs text-slate-400 mt-1">Engagements en cours</p>
               </div>
-              <div className="p-3 rounded-full bg-background/50">
-                <DollarSign className="h-7 w-7 text-primary" />
+              <div className="p-3 rounded-full bg-black/30 border border-orange-600/30">
+                <DollarSign className="h-7 w-7 text-orange-500" />
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-gradient-to-br from-primary/10 to-background/30 border-primary/20 hover:border-primary/40 transition-all">
+          <Card className="bg-gradient-to-br from-orange-600/20 to-red-600/10 border-orange-600/30 hover:border-orange-500/50 transition-all backdrop-blur-sm">
             <CardContent className="p-6 flex items-center justify-between">
               <div>
-                <p className="text-sm text-primary/80">Crédits MT/LT</p>
-                <p className="text-3xl font-bold text-foreground mt-1">{formatCurrency(statsData.creditsMTLT)}</p>
-                <p className="text-xs text-muted-foreground mt-1">Moyenne/Long terme</p>
+                <p className="text-sm text-orange-300">Crédits MT/LT</p>
+                <p className="text-3xl font-bold text-white mt-1">{formatCurrency(statsData.creditsMTLT)}</p>
+                <p className="text-xs text-slate-400 mt-1">Moyenne/Long terme</p>
               </div>
-               <div className="p-3 rounded-full bg-background/50">
-                <TrendingUp className="h-7 w-7 text-primary" />
+               <div className="p-3 rounded-full bg-black/30 border border-orange-600/30">
+                <TrendingUp className="h-7 w-7 text-orange-500" />
               </div>
             </CardContent>
           </Card>
