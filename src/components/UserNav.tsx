@@ -41,7 +41,10 @@ const UserNav = () => {
   const displayName = userProfile?.full_name || user.email?.split('@')[0] || 'Utilisateur';
   const roleLabel = userRole === 'super_admin' ? 'Super Admin' 
                   : userRole === 'bank_admin' ? 'Admin Banque'
-                  : userRole === 'agent' ? 'Agent'
+                  : userRole === 'user' ? 'Utilisateur'
+                  : userRole === 'manager' ? 'Manager'
+                  : userRole === 'validator' ? 'Validateur'
+                  : userRole === 'auditor' ? 'Auditeur'
                   : 'Utilisateur';
 
   return (
