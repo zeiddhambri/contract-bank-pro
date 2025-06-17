@@ -14,7 +14,7 @@ import CreateContractDialog from "@/components/CreateContractDialog";
 import AiAssistantSheet from "@/components/AiAssistantSheet";
 import { Button } from "@/components/ui/button";
 import { Plus, MessageCircle } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 const Index = () => {
@@ -25,31 +25,22 @@ const Index = () => {
   const navigate = useNavigate();
   const isAdmin = userRole === 'super_admin' || userRole === 'bank_admin';
 
+  // Redirect to auth if not authenticated
+  useEffect(() => {
+    if (!user) {
+      navigate('/auth');
+    }
+  }, [user, navigate]);
+
   const handleContractCreated = () => {
     setRefreshTrigger(prev => prev + 1);
   };
 
+  // Show loading while checking auth
   if (!user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
-        <div className="text-center space-y-6">
-          <div className="flex items-center justify-center space-x-4 mb-8">
-            <Logo />
-            <div>
-              <h1 className="text-4xl font-bold text-white tracking-wide">CONTRACT MANAGER</h1>
-              <p className="text-slate-300 text-lg">Plateforme de gestion des contrats</p>
-            </div>
-          </div>
-          <div className="space-y-4">
-            <p className="text-slate-300 text-lg">Veuillez vous connecter pour accéder à l'application</p>
-            <Button 
-              onClick={() => navigate('/auth')}
-              className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white font-medium px-8 py-3"
-            >
-              Se connecter
-            </Button>
-          </div>
-        </div>
+        <div className="text-white">Chargement...</div>
       </div>
     );
   }
