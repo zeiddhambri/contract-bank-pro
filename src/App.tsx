@@ -10,6 +10,7 @@ import Landing from "./pages/Landing";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+import { usePlatform } from "@/hooks/use-platform";
 
 // Create QueryClient outside component to prevent recreation on each render
 const queryClient = new QueryClient({
@@ -21,6 +22,27 @@ const queryClient = new QueryClient({
   },
 });
 
+const AppContent = () => {
+  const { isNative } = usePlatform();
+
+  return (
+    <div className={`min-h-screen ${isNative ? 'safe-area-top safe-area-bottom' : ''}`}>
+      <Suspense fallback={
+        <div className="h-screen w-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+          <div className="text-white">Loading...</div>
+        </div>
+      }>
+        <Routes>
+          <Route path="/" element={<Landing />} />
+          <Route path="/dashboard" element={<Index />} />
+          <Route path="/auth" element={<Auth />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Suspense>
+    </div>
+  );
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
@@ -28,18 +50,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <Suspense fallback={
-            <div className="h-screen w-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-              <div className="text-white">Loading...</div>
-            </div>
-          }>
-            <Routes>
-              <Route path="/" element={<Landing />} />
-              <Route path="/dashboard" element={<Index />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Suspense>
+          <AppContent />
         </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>
