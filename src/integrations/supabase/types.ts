@@ -9,6 +9,114 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      ai_contract_generations: {
+        Row: {
+          ai_suggestions: Json | null
+          contract_id: string | null
+          created_at: string | null
+          generated_content: string | null
+          generation_type: string
+          id: string
+          input_parameters: Json | null
+          quality_score: number | null
+          template_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          ai_suggestions?: Json | null
+          contract_id?: string | null
+          created_at?: string | null
+          generated_content?: string | null
+          generation_type: string
+          id?: string
+          input_parameters?: Json | null
+          quality_score?: number | null
+          template_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          ai_suggestions?: Json | null
+          contract_id?: string | null
+          created_at?: string | null
+          generated_content?: string | null
+          generation_type?: string
+          id?: string
+          input_parameters?: Json | null
+          quality_score?: number | null
+          template_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_contract_generations_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_contract_generations_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "ai_contract_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_contract_generations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_contract_templates: {
+        Row: {
+          bank_id: string | null
+          category: string
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          prompt_template: string
+          template_content: Json
+          updated_at: string | null
+        }
+        Insert: {
+          bank_id?: string | null
+          category: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          prompt_template: string
+          template_content: Json
+          updated_at?: string | null
+        }
+        Update: {
+          bank_id?: string | null
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          prompt_template?: string
+          template_content?: Json
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_contract_templates_bank_id_fkey"
+            columns: ["bank_id"]
+            isOneToOne: false
+            referencedRelation: "banks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action: string
@@ -56,27 +164,39 @@ export type Database = {
       }
       banks: {
         Row: {
+          ai_features_enabled: boolean | null
           created_at: string
+          domain_config: Json | null
           id: string
           logo_url: string | null
           name: string
           primary_color: string | null
+          subscription_plan: string | null
+          theme_config: Json | null
           updated_at: string
         }
         Insert: {
+          ai_features_enabled?: boolean | null
           created_at?: string
+          domain_config?: Json | null
           id?: string
           logo_url?: string | null
           name: string
           primary_color?: string | null
+          subscription_plan?: string | null
+          theme_config?: Json | null
           updated_at?: string
         }
         Update: {
+          ai_features_enabled?: boolean | null
           created_at?: string
+          domain_config?: Json | null
           id?: string
           logo_url?: string | null
           name?: string
           primary_color?: string | null
+          subscription_plan?: string | null
+          theme_config?: Json | null
           updated_at?: string
         }
         Relationships: []
@@ -182,6 +302,59 @@ export type Database = {
             foreignKeyName: "contracts_bank_id_fkey"
             columns: ["bank_id"]
             isOneToOne: false
+            referencedRelation: "banks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organization_branding: {
+        Row: {
+          accent_color: string | null
+          bank_id: string | null
+          created_at: string | null
+          custom_css: string | null
+          document_template_config: Json | null
+          email_template_config: Json | null
+          id: string
+          logo_primary_url: string | null
+          logo_secondary_url: string | null
+          primary_color: string | null
+          secondary_color: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          accent_color?: string | null
+          bank_id?: string | null
+          created_at?: string | null
+          custom_css?: string | null
+          document_template_config?: Json | null
+          email_template_config?: Json | null
+          id?: string
+          logo_primary_url?: string | null
+          logo_secondary_url?: string | null
+          primary_color?: string | null
+          secondary_color?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          accent_color?: string | null
+          bank_id?: string | null
+          created_at?: string | null
+          custom_css?: string | null
+          document_template_config?: Json | null
+          email_template_config?: Json | null
+          id?: string
+          logo_primary_url?: string | null
+          logo_secondary_url?: string | null
+          primary_color?: string | null
+          secondary_color?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_branding_bank_id_fkey"
+            columns: ["bank_id"]
+            isOneToOne: true
             referencedRelation: "banks"
             referencedColumns: ["id"]
           },

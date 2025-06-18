@@ -1,8 +1,7 @@
 
 import React, { useState } from "react";
-import * as XLSX from 'xlsx';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 import {
   Table,
   TableBody,
@@ -11,32 +10,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import ContractStatusSelect from "./ContractStatusSelect";
-import ContractDetailDialog from "./ContractDetailDialog";
-import {
-  formatCurrency,
-  formatDate,
-  getAgenceLabel,
-  getGarantieLabel,
-  getTypeLabel,
-  CONTRACT_STATUS_OPTIONS,
-} from "@/lib/contract-helpers";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Eye, Edit2, Trash2, FileText, Brain } from "lucide-react";
 import { Tables, TablesUpdate } from "@/integrations/supabase/types";
-import { Download, Paperclip, Trash2 } from "lucide-react";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { supabase } from "@/integrations/supabase/client";
+import ContractDetailDialog from "./ContractDetailDialog";
+import AiContractGenerator from "./AiContractGenerator";
 
 interface ContractTableProps {
   contracts: Tables<'contracts'>[];
@@ -54,190 +34,192 @@ const ContractTable: React.FC<ContractTableProps> = ({
   handleContractDelete,
 }) => {
   const [selectedContract, setSelectedContract] = useState<Tables<'contracts'> | null>(null);
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const [aiGeneratorOpen, setAiGeneratorOpen] = useState(false);
+  const [aiContractId, setAiContractId] = useState<string | null>(null);
 
-  const handleVoirDetails = (contract: Tables<'contracts'>) => {
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "signe":
+        return "bg-green-500";
+      case "en_cours":
+        return "bg-blue-500";
+      case "refuse":
+        return "bg-red-500";
+      case "attente":
+        return "bg-yellow-500";
+      default:
+        return "bg-gray-500";
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case "signe":
+        return "Signé";
+      case "en_cours":
+        return "En cours";
+      case "refuse":
+        return "Refusé";
+      case "attente":
+        return "En attente";
+      default:
+        return status;
+    }
+  };
+
+  const handleViewContract = (contract: Tables<'contracts'>) => {
     setSelectedContract(contract);
-    setDialogOpen(true);
+    setDetailDialogOpen(true);
   };
 
-  const getFileUrl = (filePath: string) => {
-    const { data } = supabase.storage.from('contract_files').getPublicUrl(filePath);
-    return data.publicUrl;
-  };
-
-  const getStatusLabel = (statusValue: string) => {
-    return CONTRACT_STATUS_OPTIONS.find(opt => opt.value === statusValue)?.label || statusValue;
-  }
-
-  const handleExportExcel = () => {
-    const dataToExport = contracts.map(c => ({
-      "Référence Décision": c.reference_decision,
-      "Client": c.client,
-      "Type": getTypeLabel(c.type),
-      "Montant": c.montant,
-      "Garantie": getGarantieLabel(c.garantie),
-      "Statut": getStatusLabel(c.statut),
-      "Agence": getAgenceLabel(c.agence),
-      "Date décision": formatDate(c.date_decision),
-    }));
-
-    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Contrats");
-    XLSX.writeFile(workbook, "contrats.xlsx");
-  };
-
-  const handleExportPDF = () => {
-    const doc = new jsPDF();
-    const tableColumn = ["Référence Décision", "Client", "Type", "Montant", "Garantie", "Statut", "Agence", "Date décision"];
-    const tableRows: (string | number)[][] = [];
-
-    contracts.forEach(c => {
-      const contractData = [
-        c.reference_decision,
-        c.client,
-        getTypeLabel(c.type),
-        formatCurrency(c.montant),
-        getGarantieLabel(c.garantie),
-        getStatusLabel(c.statut),
-        getAgenceLabel(c.agence),
-        formatDate(c.date_decision),
-      ];
-      tableRows.push(contractData);
-    });
-
-    (doc as any).autoTable({
-        head: [tableColumn],
-        body: tableRows,
-        startY: 20,
-        styles: { font: "helvetica", fontSize: 8 },
-        headStyles: { fillColor: [22, 160, 133] },
-    });
-    doc.text("Liste des Contrats", 14, 15);
-    doc.save("contrats.pdf");
+  const handleAiGenerate = (contractId: string) => {
+    setAiContractId(contractId);
+    setAiGeneratorOpen(true);
   };
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <p>Chargement des contrats...</p>
-      </div>
+      <Card className="bg-black/30 border-slate-700/50">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-center py-8">
+            <div className="text-slate-400">Chargement des contrats...</div>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
+
+  if (contracts.length === 0) {
+    return (
+      <Card className="bg-black/30 border-slate-700/50">
+        <CardContent className="p-6">
+          <div className="text-center py-8">
+            <FileText className="w-12 h-12 mx-auto mb-4 text-slate-500" />
+            <p className="text-slate-400 text-lg">Aucun contrat trouvé</p>
+            <p className="text-slate-500 text-sm">Créez votre premier contrat pour commencer.</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <>
-      <div className="flex justify-end gap-2 mb-4">
-        <Button onClick={handleExportExcel} variant="outline" size="sm">
-          <Download className="mr-2 h-4 w-4" />
-          Export Excel
-        </Button>
-        <Button onClick={handleExportPDF} variant="outline" size="sm">
-          <Download className="mr-2 h-4 w-4" />
-          Export PDF
-        </Button>
-      </div>
-      <div className="overflow-x-auto rounded-lg border bg-card">
-        <Table>
-          <TableHeader>
-            <TableRow className="hover:bg-muted/50">
-              <TableHead>Référence Décision</TableHead>
-              <TableHead>Client</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Montant</TableHead>
-              <TableHead>Garantie</TableHead>
-              <TableHead>Statut</TableHead>
-              <TableHead>Agence</TableHead>
-              <TableHead>Date décision</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {contracts.map((contract) => (
-              <TableRow key={contract.id} className="hover:bg-muted/50">
-                <TableCell className="font-medium">{contract.reference_decision}</TableCell>
-                <TableCell>{contract.client}</TableCell>
-                <TableCell>
-                  <Badge variant="outline">
-                    {getTypeLabel(contract.type)}
-                  </Badge>
-                </TableCell>
-                <TableCell className="font-semibold text-primary">
-                  {formatCurrency(contract.montant)}
-                </TableCell>
-                <TableCell>{getGarantieLabel(contract.garantie)}</TableCell>
-                <TableCell>
-                  <ContractStatusSelect
-                    value={contract.statut}
-                    disabled={updatingContractId === contract.id}
-                    onChange={(v) => handleContractUpdate(contract.id, { statut: v })}
-                  />
-                </TableCell>
-                <TableCell>{getAgenceLabel(contract.agence)}</TableCell>
-                <TableCell>{formatDate(contract.date_decision)}</TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleVoirDetails(contract)}
-                      disabled={updatingContractId === contract.id}
-                    >
-                      Voir détails
-                    </Button>
-                    {contract.file_path && (
-                        <Button asChild variant="ghost" size="icon">
-                            <a href={getFileUrl(contract.file_path)} target="_blank" rel="noopener noreferrer" title="Télécharger le fichier">
-                                <Paperclip className="h-4 w-4" />
-                            </a>
-                        </Button>
-                    )}
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
+      <Card className="bg-black/30 border-slate-700/50 backdrop-blur-sm">
+        <CardHeader>
+          <CardTitle className="text-white flex items-center gap-2">
+            <FileText className="w-5 h-5" />
+            Liste des Contrats ({contracts.length})
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-slate-700/50 hover:bg-slate-800/30">
+                  <TableHead className="text-slate-300">Client</TableHead>
+                  <TableHead className="text-slate-300">Type</TableHead>
+                  <TableHead className="text-slate-300">Montant</TableHead>
+                  <TableHead className="text-slate-300">Statut</TableHead>
+                  <TableHead className="text-slate-300">Date Décision</TableHead>
+                  <TableHead className="text-slate-300">Agence</TableHead>
+                  <TableHead className="text-slate-300">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {contracts.map((contract) => (
+                  <TableRow
+                    key={contract.id}
+                    className="border-slate-700/50 hover:bg-slate-800/20 transition-colors"
+                  >
+                    <TableCell className="text-slate-200 font-medium">
+                      {contract.client}
+                    </TableCell>
+                    <TableCell className="text-slate-300">
+                      {contract.type}
+                    </TableCell>
+                    <TableCell className="text-slate-200 font-mono">
+                      {new Intl.NumberFormat('fr-FR', {
+                        style: 'currency',
+                        currency: 'EUR'
+                      }).format(Number(contract.montant))}
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={`${getStatusColor(contract.statut)} text-white`}>
+                        {getStatusLabel(contract.statut)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-slate-300">
+                      {format(new Date(contract.date_decision), 'dd/MM/yyyy', { locale: fr })}
+                    </TableCell>
+                    <TableCell className="text-slate-300">
+                      {contract.agence}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-2">
                         <Button
                           variant="ghost"
-                          size="icon"
-                          className="text-destructive hover:text-destructive/90"
-                          disabled={updatingContractId === contract.id}
+                          size="sm"
+                          onClick={() => handleViewContract(contract)}
+                          className="text-blue-400 hover:text-blue-300 hover:bg-blue-400/10"
+                          title="Voir les détails"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Eye className="h-4 w-4" />
                         </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Êtes-vous sûr?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Cette action est irréversible. Le contrat sera définitivement supprimé.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Annuler</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() => handleContractDelete(contract.id)}
-                            className="bg-destructive hover:bg-destructive/90"
-                          >
-                            Supprimer
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+                        
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleAiGenerate(contract.id)}
+                          className="text-purple-400 hover:text-purple-300 hover:bg-purple-400/10"
+                          title="Améliorer avec l'IA"
+                        >
+                          <Brain className="h-4 w-4" />
+                        </Button>
 
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleContractDelete(contract.id)}
+                          disabled={updatingContractId === contract.id}
+                          className="text-red-400 hover:text-red-300 hover:bg-red-400/10"
+                          title="Supprimer"
+                        >
+                          {updatingContractId === contract.id ? (
+                            <div className="w-4 h-4 border-2 border-red-400/30 border-t-red-400 rounded-full animate-spin" />
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Dialogs */}
       {selectedContract && (
         <ContractDetailDialog
-          open={dialogOpen}
-          onOpenChange={setDialogOpen}
           contract={selectedContract}
-          onSaveChanges={handleContractUpdate}
-          isSaving={updatingContractId === selectedContract.id}
+          open={detailDialogOpen}
+          onOpenChange={setDetailDialogOpen}
+          onContractUpdate={handleContractUpdate}
         />
       )}
+      
+      <AiContractGenerator
+        open={aiGeneratorOpen}
+        onOpenChange={setAiGeneratorOpen}
+        contractId={aiContractId}
+        onContractGenerated={() => {
+          // Refresh contracts list if needed
+        }}
+      />
     </>
   );
 };

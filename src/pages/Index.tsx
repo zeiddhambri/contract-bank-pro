@@ -12,8 +12,10 @@ import UserNav from "@/components/UserNav";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import CreateContractDialog from "@/components/CreateContractDialog";
 import AiAssistantSheet from "@/components/AiAssistantSheet";
+import AiContractGenerator from "@/components/AiContractGenerator";
+import OrganizationBrandingManager from "@/components/OrganizationBrandingManager";
 import { Button } from "@/components/ui/button";
-import { Plus, MessageCircle } from "lucide-react";
+import { Plus, MessageCircle, Brain, Palette } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -21,6 +23,7 @@ const Index = () => {
   const { userRole, user } = useAuth();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [aiAssistantOpen, setAiAssistantOpen] = useState(false);
+  const [aiGeneratorOpen, setAiGeneratorOpen] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const navigate = useNavigate();
   const isAdmin = userRole === 'super_admin' || userRole === 'bank_admin';
@@ -67,6 +70,14 @@ const Index = () => {
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Nouveau Contrat
+              </Button>
+              
+              <Button
+                onClick={() => setAiGeneratorOpen(true)}
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium"
+              >
+                <Brain className="h-4 w-4 mr-2" />
+                Agent IA
               </Button>
               
               <Button
@@ -120,6 +131,15 @@ const Index = () => {
             )}
             {isAdmin && (
               <TabsTrigger 
+                value="branding" 
+                className="px-6 py-2 text-slate-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-600 data-[state=active]:to-red-600 data-[state=active]:text-white"
+              >
+                <Palette className="h-4 w-4 mr-2" />
+                Branding
+              </TabsTrigger>
+            )}
+            {isAdmin && (
+              <TabsTrigger 
                 value="admin" 
                 className="px-6 py-2 text-slate-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-600 data-[state=active]:to-red-600 data-[state=active]:text-white"
               >
@@ -147,6 +167,11 @@ const Index = () => {
               </TabsContent>
             )}
             {isAdmin && (
+              <TabsContent value="branding">
+                <OrganizationBrandingManager />
+              </TabsContent>
+            )}
+            {isAdmin && (
               <TabsContent value="admin">
                 <UserManagementPanel />
               </TabsContent>
@@ -160,6 +185,12 @@ const Index = () => {
         open={createDialogOpen}
         onOpenChange={setCreateDialogOpen}
         onContractCreated={handleContractCreated}
+      />
+      
+      <AiContractGenerator
+        open={aiGeneratorOpen}
+        onOpenChange={setAiGeneratorOpen}
+        onContractGenerated={handleContractCreated}
       />
       
       <AiAssistantSheet
