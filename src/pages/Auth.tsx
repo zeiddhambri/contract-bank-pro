@@ -20,13 +20,16 @@ const Auth = () => {
 
   useEffect(() => {
     if (user) {
-      navigate('/');
+      navigate('/dashboard');
     }
   }, [user, navigate]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    await signIn(email, password);
+    const { error } = await signIn(email, password);
+    if (!error) {
+      navigate('/dashboard');
+    }
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -34,7 +37,10 @@ const Auth = () => {
     if (password !== confirmPassword) {
       return;
     }
-    await signUp(email, password);
+    const { error } = await signUp(email, password);
+    if (!error) {
+      // L'utilisateur sera redirigé après confirmation de l'email
+    }
   };
 
   const handleResetPassword = async (e: React.FormEvent) => {
@@ -57,7 +63,7 @@ const Auth = () => {
           <div className="flex items-center space-x-4">
             <Logo />
             <div>
-              <h1 className="text-2xl font-bold text-white tracking-wide">CONTRACT MANAGER</h1>
+              <h1 className="text-2xl font-bold text-white tracking-wide">JURIX</h1>
               <p className="text-sm text-slate-300">Authentification</p>
             </div>
           </div>
