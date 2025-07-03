@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -57,14 +56,75 @@ const Landing = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-black relative overflow-hidden">
+      {/* Animated Stars Background */}
+      <div className="absolute inset-0 overflow-hidden">
+        {/* Large stars */}
+        {[...Array(50)].map((_, i) => (
+          <div
+            key={i}
+            className="absolute w-1 h-1 bg-white rounded-full animate-pulse"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 3}s`,
+              animationDuration: `${2 + Math.random() * 2}s`
+            }}
+          />
+        ))}
+        
+        {/* Medium stars */}
+        {[...Array(30)].map((_, i) => (
+          <div
+            key={`med-${i}`}
+            className="absolute w-0.5 h-0.5 bg-blue-200 rounded-full animate-pulse"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 4}s`,
+              animationDuration: `${3 + Math.random() * 2}s`
+            }}
+          />
+        ))}
+        
+        {/* Small twinkling stars */}
+        {[...Array(100)].map((_, i) => (
+          <div
+            key={`small-${i}`}
+            className="absolute w-px h-px bg-slate-300 rounded-full opacity-70"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              animation: `twinkle ${1 + Math.random() * 2}s ease-in-out infinite alternate`,
+              animationDelay: `${Math.random() * 5}s`
+            }}
+          />
+        ))}
+        
+        {/* Shooting stars */}
+        <div className="absolute top-1/4 left-1/4 w-32 h-px bg-gradient-to-r from-transparent via-white to-transparent opacity-0 animate-pulse" 
+             style={{ animationDuration: '8s', animationDelay: '3s' }} />
+        <div className="absolute top-1/3 right-1/3 w-24 h-px bg-gradient-to-r from-transparent via-blue-200 to-transparent opacity-0 animate-pulse" 
+             style={{ animationDuration: '10s', animationDelay: '6s' }} />
+      </div>
+
+      {/* Mountain silhouette */}
+      <div className="absolute bottom-0 left-0 right-0 h-64 bg-gradient-to-t from-black via-slate-900 to-transparent">
+        <svg className="absolute bottom-0 w-full h-full" viewBox="0 0 1200 300" preserveAspectRatio="none">
+          <path d="M0,300 L0,150 L200,100 L400,120 L600,80 L800,110 L1000,90 L1200,130 L1200,300 Z" 
+                fill="rgba(0,0,0,0.8)" />
+          <path d="M0,300 L0,180 L150,140 L350,160 L550,120 L750,150 L950,130 L1200,160 L1200,300 Z" 
+                fill="rgba(0,0,0,0.6)" />
+        </svg>
+      </div>
+
       {/* Header Navigation */}
-      <header className="border-b border-slate-700/50 bg-black/20 backdrop-blur-sm">
+      <header className="relative z-10 border-b border-slate-700/30 bg-black/20 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <Logo />
-              <span className="text-2xl font-bold text-white">CONTRACT MANAGER</span>
+              <span className="text-2xl font-bold text-white tracking-wider">JURIX</span>
             </div>
             <div className="flex items-center space-x-4">
               <Button variant="ghost" className="text-slate-300 hover:text-white">
@@ -88,46 +148,57 @@ const Landing = () => {
       </header>
 
       {/* Hero Section */}
-      <section className="py-20 px-4">
+      <section className="relative z-10 py-32 px-4">
         <div className="container mx-auto text-center">
-          <h1 className="text-5xl md:text-6xl font-bold text-white mb-6 leading-tight">
-            Gérez vos contrats
-            <br />
-            <span className="bg-gradient-to-r from-orange-400 to-red-400 bg-clip-text text-transparent">
-              en toute simplicité
-            </span>
-          </h1>
-          <p className="text-xl text-slate-300 mb-8 max-w-3xl mx-auto">
+          <div className="mb-8">
+            <h1 className="text-7xl font-bold text-white mb-4 tracking-wider opacity-90">
+              JURIX
+            </h1>
+            <div className="w-24 h-1 bg-gradient-to-r from-orange-400 to-red-400 mx-auto mb-8"></div>
+          </div>
+          
+          <h2 className="text-4xl md:text-5xl font-light text-white mb-8 leading-tight opacity-90">
+            Launching Soon
+          </h2>
+          
+          <p className="text-xl text-slate-300 mb-12 max-w-3xl mx-auto opacity-80">
             La plateforme de gestion de contrats la plus avancée pour les institutions financières. 
             Sécurisez, automatisez et optimisez vos processus contractuels.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
-            <Button 
-              asChild
-              size="lg" 
-              className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-lg px-8 py-4"
-            >
-              <Link to="/auth">
-                Démarrer gratuitement
+          
+          <div className="mb-16">
+            <h3 className="text-2xl font-light text-white mb-8">Contact Us</h3>
+            <p className="text-lg text-slate-300 mb-8">Drop us a line!</p>
+            
+            <div className="max-w-md mx-auto space-y-4">
+              <input 
+                type="text" 
+                placeholder="Name" 
+                className="w-full px-4 py-3 bg-black/30 border border-slate-600/50 rounded-lg text-white placeholder-slate-400 backdrop-blur-sm focus:border-orange-500 focus:outline-none transition-colors"
+              />
+              <input 
+                type="email" 
+                placeholder="Email*" 
+                className="w-full px-4 py-3 bg-black/30 border border-slate-600/50 rounded-lg text-white placeholder-slate-400 backdrop-blur-sm focus:border-orange-500 focus:outline-none transition-colors"
+              />
+              <textarea 
+                placeholder="Message" 
+                rows={4}
+                className="w-full px-4 py-3 bg-black/30 border border-slate-600/50 rounded-lg text-white placeholder-slate-400 backdrop-blur-sm focus:border-orange-500 focus:outline-none transition-colors resize-none"
+              />
+              <Button 
+                className="w-full bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-lg py-3"
+              >
+                Envoyer le message
                 <ArrowRight className="ml-2 h-5 w-5" />
-              </Link>
-            </Button>
-            <Button 
-              variant="outline" 
-              size="lg"
-              className="border-slate-600 text-slate-300 hover:bg-slate-800 text-lg px-8 py-4"
-            >
-              Voir la démo
-            </Button>
+              </Button>
+            </div>
           </div>
-          <p className="text-sm text-slate-400">
-            ✓ Essai gratuit de 14 jours • ✓ Aucune carte de crédit requise • ✓ Configuration en 5 minutes
-          </p>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="py-20 px-4">
+      {/* Features Section - with backdrop */}
+      <section className="relative z-10 py-20 px-4 bg-black/20 backdrop-blur-sm">
         <div className="container mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-white mb-4">
@@ -159,7 +230,7 @@ const Landing = () => {
       </section>
 
       {/* Benefits Section */}
-      <section className="py-20 px-4 bg-black/20">
+      <section className="relative z-10 py-20 px-4 bg-black/30 backdrop-blur-sm">
         <div className="container mx-auto">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div>
@@ -204,7 +275,7 @@ const Landing = () => {
       </section>
 
       {/* Testimonials Section */}
-      <section className="py-20 px-4">
+      <section className="relative z-10 py-20 px-4">
         <div className="container mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-white mb-4">
@@ -241,7 +312,7 @@ const Landing = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 px-4 bg-gradient-to-r from-orange-600/10 to-red-600/10">
+      <section className="relative z-10 py-20 px-4 bg-gradient-to-r from-orange-600/10 to-red-600/10 backdrop-blur-sm">
         <div className="container mx-auto text-center">
           <h2 className="text-4xl font-bold text-white mb-4">
             Prêt à transformer votre gestion de contrats ?
@@ -263,7 +334,7 @@ const Landing = () => {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-slate-700/50 bg-black/20 py-12 px-4">
+      <footer className="relative z-10 border-t border-slate-700/30 bg-black/40 backdrop-blur-sm py-12 px-4">
         <div className="container mx-auto">
           <div className="grid md:grid-cols-4 gap-8">
             <div>
@@ -308,6 +379,13 @@ const Landing = () => {
           </div>
         </div>
       </footer>
+
+      <style jsx>{`
+        @keyframes twinkle {
+          0% { opacity: 0.3; }
+          100% { opacity: 1; }
+        }
+      `}</style>
     </div>
   );
 };
