@@ -13,7 +13,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Search, Eye, Edit, Trash2, Download, Filter } from "lucide-react";
-import ContractDetailDialog from "./ContractDetailDialog";
 import { formatCurrency } from "@/lib/contract-helpers";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -75,8 +74,6 @@ const getStatusLabel = (status: string) => {
 
 const ContractTable = ({ contracts, onContractUpdate, isLoading }: ContractTableProps) => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
-  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
   const filteredContracts = contracts.filter((contract) => {
@@ -91,14 +88,8 @@ const ContractTable = ({ contracts, onContractUpdate, isLoading }: ContractTable
   });
 
   const handleViewContract = (contract: Contract) => {
-    setSelectedContract(contract);
-    setDetailDialogOpen(true);
-  };
-
-  const handleContractUpdated = () => {
-    setDetailDialogOpen(false);
-    setSelectedContract(null);
-    onContractUpdate?.();
+    console.log("Viewing contract:", contract);
+    // TODO: Implement contract detail view
   };
 
   if (isLoading) {
@@ -114,135 +105,124 @@ const ContractTable = ({ contracts, onContractUpdate, isLoading }: ContractTable
   }
 
   return (
-    <>
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <span>Liste des Contrats</span>
-            <Badge variant="secondary" className="bg-slate-100 text-slate-700">
-              {filteredContracts.length} contrat{filteredContracts.length > 1 ? 's' : ''}
-            </Badge>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {/* Filtres et recherche */}
-          <div className="flex flex-col sm:flex-row gap-4 mb-6">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
-              <Input
-                placeholder="Rechercher par client, type ou référence..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-slate-50 border-slate-200 focus:border-orange-500"
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-slate-500" />
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-3 py-2 border border-slate-200 rounded-md bg-white text-sm focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
-              >
-                <option value="all">Tous les statuts</option>
-                <option value="actif">Actif</option>
-                <option value="en_attente">En attente</option>
-                <option value="expire">Expiré</option>
-                <option value="resilie">Résilié</option>
-              </select>
-            </div>
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center justify-between">
+          <span>Liste des Contrats</span>
+          <Badge variant="secondary" className="bg-slate-100 text-slate-700">
+            {filteredContracts.length} contrat{filteredContracts.length > 1 ? 's' : ''}
+          </Badge>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {/* Filtres et recherche */}
+        <div className="flex flex-col sm:flex-row gap-4 mb-6">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
+            <Input
+              placeholder="Rechercher par client, type ou référence..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 bg-slate-50 border-slate-200 focus:border-orange-500"
+            />
           </div>
+          <div className="flex items-center gap-2">
+            <Filter className="h-4 w-4 text-slate-500" />
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="px-3 py-2 border border-slate-200 rounded-md bg-white text-sm focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+            >
+              <option value="all">Tous les statuts</option>
+              <option value="actif">Actif</option>
+              <option value="en_attente">En attente</option>
+              <option value="expire">Expiré</option>
+              <option value="resilie">Résilié</option>
+            </select>
+          </div>
+        </div>
 
-          {/* Table */}
-          <div className="rounded-lg border border-slate-200 overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-slate-50">
-                  <TableHead className="font-semibold text-slate-700">Client</TableHead>
-                  <TableHead className="font-semibold text-slate-700">Type</TableHead>
-                  <TableHead className="font-semibold text-slate-700">Montant</TableHead>
-                  <TableHead className="font-semibold text-slate-700">Statut</TableHead>
-                  <TableHead className="font-semibold text-slate-700">Date Décision</TableHead>
-                  <TableHead className="font-semibold text-slate-700">Agence</TableHead>
-                  <TableHead className="font-semibold text-slate-700 text-right">Actions</TableHead>
+        {/* Table */}
+        <div className="rounded-lg border border-slate-200 overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-slate-50">
+                <TableHead className="font-semibold text-slate-700">Client</TableHead>
+                <TableHead className="font-semibold text-slate-700">Type</TableHead>
+                <TableHead className="font-semibold text-slate-700">Montant</TableHead>
+                <TableHead className="font-semibold text-slate-700">Statut</TableHead>
+                <TableHead className="font-semibold text-slate-700">Date Décision</TableHead>
+                <TableHead className="font-semibold text-slate-700">Agence</TableHead>
+                <TableHead className="font-semibold text-slate-700 text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredContracts.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-8 text-slate-400">
+                    {searchTerm || statusFilter !== "all" 
+                      ? "Aucun contrat ne correspond à vos critères de recherche"
+                      : "Aucun contrat disponible"
+                    }
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredContracts.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-slate-400">
-                      {searchTerm || statusFilter !== "all" 
-                        ? "Aucun contrat ne correspond à vos critères de recherche"
-                        : "Aucun contrat disponible"
-                      }
+              ) : (
+                filteredContracts.map((contract) => (
+                  <TableRow key={contract.id} className="hover:bg-slate-50 transition-colors">
+                    <TableCell className="font-medium text-slate-900">
+                      {contract.client}
                     </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredContracts.map((contract) => (
-                    <TableRow key={contract.id} className="hover:bg-slate-50 transition-colors">
-                      <TableCell className="font-medium text-slate-900">
-                        {contract.client}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                          {contract.type}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="font-semibold text-slate-900">
-                        {formatCurrency(contract.montant)}
-                      </TableCell>
-                      <TableCell>
-                        <Badge 
-                          variant="outline" 
-                          className={getStatusColor(contract.statut)}
+                    <TableCell>
+                      <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                        {contract.type}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="font-semibold text-slate-900">
+                      {formatCurrency(contract.montant)}
+                    </TableCell>
+                    <TableCell>
+                      <Badge 
+                        variant="outline" 
+                        className={getStatusColor(contract.statut)}
+                      >
+                        {getStatusLabel(contract.statut)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-slate-600">
+                      {format(new Date(contract.date_decision), 'dd/MM/yyyy', { locale: fr })}
+                    </TableCell>
+                    <TableCell className="text-slate-600">
+                      {contract.agence}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleViewContract(contract)}
+                          className="text-slate-600 hover:text-orange-600 hover:bg-orange-50"
                         >
-                          {getStatusLabel(contract.statut)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-slate-600">
-                        {format(new Date(contract.date_decision), 'dd/MM/yyyy', { locale: fr })}
-                      </TableCell>
-                      <TableCell className="text-slate-600">
-                        {contract.agence}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-2">
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        {contract.file_path && (
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleViewContract(contract)}
-                            className="text-slate-600 hover:text-orange-600 hover:bg-orange-50"
+                            className="text-slate-600 hover:text-green-600 hover:bg-green-50"
                           >
-                            <Eye className="h-4 w-4" />
+                            <Download className="h-4 w-4" />
                           </Button>
-                          {contract.file_path && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-slate-600 hover:text-green-600 hover:bg-green-50"
-                            >
-                              <Download className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Dialog de détails du contrat */}
-      {selectedContract && (
-        <ContractDetailDialog
-          contract={selectedContract}
-          open={detailDialogOpen}
-          onOpenChange={setDetailDialogOpen}
-        />
-      )}
-    </>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 

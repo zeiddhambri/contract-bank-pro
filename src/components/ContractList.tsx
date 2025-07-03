@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -87,18 +88,15 @@ const ContractList: React.FC = () => {
     await deleteContractMutation.mutateAsync({ contractId });
   };
 
-  const mutatingContractId =
-    (updateContractMutation.isPending && updateContractMutation.variables?.contractId) ||
-    (deleteContractMutation.isPending && deleteContractMutation.variables?.contractId) ||
-    null;
+  const handleContractUpdated = () => {
+    queryClient.invalidateQueries({ queryKey: ["contracts"] });
+  };
 
   return (
     <ContractTable
       contracts={contracts || []}
       isLoading={isLoading}
-      updatingContractId={mutatingContractId}
-      handleContractUpdate={handleContractUpdate}
-      handleContractDelete={handleContractDelete}
+      onContractUpdate={handleContractUpdated}
     />
   );
 };
