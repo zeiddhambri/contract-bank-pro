@@ -1,7 +1,7 @@
 
-import React, { useState } from "react";
-import { format } from "date-fns";
-import { fr } from "date-fns/locale";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -10,94 +10,103 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Eye, Edit2, Trash2, FileText, Brain } from "lucide-react";
-import { Tables, TablesUpdate } from "@/integrations/supabase/types";
+import { Search, Eye, Edit, Trash2, Download, Filter } from "lucide-react";
 import ContractDetailDialog from "./ContractDetailDialog";
-import AiContractGenerator from "./AiContractGenerator";
+import { formatCurrency } from "@/lib/contract-helpers";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 
-interface ContractTableProps {
-  contracts: Tables<'contracts'>[];
-  isLoading: boolean;
-  updatingContractId: string | null;
-  handleContractUpdate: (contractId: string, updates: Partial<TablesUpdate<'contracts'>>) => Promise<void>;
-  handleContractDelete: (contractId: string) => Promise<void>;
+interface Contract {
+  id: string;
+  client: string;
+  type: string;
+  montant: number;
+  statut: string;
+  date_decision: string;
+  date_signature: string | null;
+  agence: string;
+  reference_decision: string;
+  garantie: string;
+  description: string | null;
+  file_path: string | null;
+  bank_id: string;
+  garanties: any;
+  created_at: string;
+  updated_at: string;
 }
 
-const ContractTable: React.FC<ContractTableProps> = ({
-  contracts,
-  isLoading,
-  updatingContractId,
-  handleContractUpdate,
-  handleContractDelete,
-}) => {
-  const [selectedContract, setSelectedContract] = useState<Tables<'contracts'> | null>(null);
+interface ContractTableProps {
+  contracts: Contract[];
+  onContractUpdate?: () => void;
+  isLoading?: boolean;
+}
+
+const getStatusColor = (status: string) => {
+  switch (status.toLowerCase()) {
+    case 'actif':
+      return 'bg-green-100 text-green-800 border-green-200';
+    case 'en_attente':
+      return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+    case 'expire':
+      return 'bg-red-100 text-red-800 border-red-200';
+    case 'resilie':
+      return 'bg-gray-100 text-gray-800 border-gray-200';
+    default:
+      return 'bg-blue-100 text-blue-800 border-blue-200';
+  }
+};
+
+const getStatusLabel = (status: string) => {
+  switch (status.toLowerCase()) {
+    case 'actif':
+      return 'Actif';
+    case 'en_attente':
+      return 'En attente';
+    case 'expire':
+      return 'Expiré';
+    case 'resilie':
+      return 'Résilié';
+    default:
+      return status;
+  }
+};
+
+const ContractTable = ({ contracts, onContractUpdate, isLoading }: ContractTableProps) => {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
-  const [aiGeneratorOpen, setAiGeneratorOpen] = useState(false);
-  const [aiContractId, setAiContractId] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<string>("all");
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "signe":
-        return "bg-green-500";
-      case "en_cours":
-        return "bg-blue-500";
-      case "refuse":
-        return "bg-red-500";
-      case "attente":
-        return "bg-yellow-500";
-      default:
-        return "bg-gray-500";
-    }
-  };
+  const filteredContracts = contracts.filter((contract) => {
+    const matchesSearch = 
+      contract.client.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      contract.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      contract.reference_decision.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = statusFilter === "all" || contract.statut === statusFilter;
+    
+    return matchesSearch && matchesStatus;
+  });
 
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case "signe":
-        return "Signé";
-      case "en_cours":
-        return "En cours";
-      case "refuse":
-        return "Refusé";
-      case "attente":
-        return "En attente";
-      default:
-        return status;
-    }
-  };
-
-  const handleViewContract = (contract: Tables<'contracts'>) => {
+  const handleViewContract = (contract: Contract) => {
     setSelectedContract(contract);
     setDetailDialogOpen(true);
   };
 
-  const handleAiGenerate = (contractId: string) => {
-    setAiContractId(contractId);
-    setAiGeneratorOpen(true);
+  const handleContractUpdated = () => {
+    setDetailDialogOpen(false);
+    setSelectedContract(null);
+    onContractUpdate?.();
   };
 
   if (isLoading) {
     return (
-      <Card className="bg-black/30 border-slate-700/50">
+      <Card>
         <CardContent className="p-6">
-          <div className="flex items-center justify-center py-8">
-            <div className="text-slate-400">Chargement des contrats...</div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (contracts.length === 0) {
-    return (
-      <Card className="bg-black/30 border-slate-700/50">
-        <CardContent className="p-6">
-          <div className="text-center py-8">
-            <FileText className="w-12 h-12 mx-auto mb-4 text-slate-500" />
-            <p className="text-slate-400 text-lg">Aucun contrat trouvé</p>
-            <p className="text-slate-500 text-sm">Créez votre premier contrat pour commencer.</p>
+          <div className="text-center text-slate-400">
+            Chargement des contrats...
           </div>
         </CardContent>
       </Card>
@@ -106,120 +115,133 @@ const ContractTable: React.FC<ContractTableProps> = ({
 
   return (
     <>
-      <Card className="bg-black/30 border-slate-700/50 backdrop-blur-sm">
+      <Card>
         <CardHeader>
-          <CardTitle className="text-white flex items-center gap-2">
-            <FileText className="w-5 h-5" />
-            Liste des Contrats ({contracts.length})
+          <CardTitle className="flex items-center justify-between">
+            <span>Liste des Contrats</span>
+            <Badge variant="secondary" className="bg-slate-100 text-slate-700">
+              {filteredContracts.length} contrat{filteredContracts.length > 1 ? 's' : ''}
+            </Badge>
           </CardTitle>
         </CardHeader>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
+        <CardContent>
+          {/* Filtres et recherche */}
+          <div className="flex flex-col sm:flex-row gap-4 mb-6">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
+              <Input
+                placeholder="Rechercher par client, type ou référence..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 bg-slate-50 border-slate-200 focus:border-orange-500"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <Filter className="h-4 w-4 text-slate-500" />
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="px-3 py-2 border border-slate-200 rounded-md bg-white text-sm focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+              >
+                <option value="all">Tous les statuts</option>
+                <option value="actif">Actif</option>
+                <option value="en_attente">En attente</option>
+                <option value="expire">Expiré</option>
+                <option value="resilie">Résilié</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Table */}
+          <div className="rounded-lg border border-slate-200 overflow-hidden">
             <Table>
               <TableHeader>
-                <TableRow className="border-slate-700/50 hover:bg-slate-800/30">
-                  <TableHead className="text-slate-300">Client</TableHead>
-                  <TableHead className="text-slate-300">Type</TableHead>
-                  <TableHead className="text-slate-300">Montant</TableHead>
-                  <TableHead className="text-slate-300">Statut</TableHead>
-                  <TableHead className="text-slate-300">Date Décision</TableHead>
-                  <TableHead className="text-slate-300">Agence</TableHead>
-                  <TableHead className="text-slate-300">Actions</TableHead>
+                <TableRow className="bg-slate-50">
+                  <TableHead className="font-semibold text-slate-700">Client</TableHead>
+                  <TableHead className="font-semibold text-slate-700">Type</TableHead>
+                  <TableHead className="font-semibold text-slate-700">Montant</TableHead>
+                  <TableHead className="font-semibold text-slate-700">Statut</TableHead>
+                  <TableHead className="font-semibold text-slate-700">Date Décision</TableHead>
+                  <TableHead className="font-semibold text-slate-700">Agence</TableHead>
+                  <TableHead className="font-semibold text-slate-700 text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {contracts.map((contract) => (
-                  <TableRow
-                    key={contract.id}
-                    className="border-slate-700/50 hover:bg-slate-800/20 transition-colors"
-                  >
-                    <TableCell className="text-slate-200 font-medium">
-                      {contract.client}
-                    </TableCell>
-                    <TableCell className="text-slate-300">
-                      {contract.type}
-                    </TableCell>
-                    <TableCell className="text-slate-200 font-mono">
-                      {new Intl.NumberFormat('fr-FR', {
-                        style: 'currency',
-                        currency: 'EUR'
-                      }).format(Number(contract.montant))}
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={`${getStatusColor(contract.statut)} text-white`}>
-                        {getStatusLabel(contract.statut)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-slate-300">
-                      {format(new Date(contract.date_decision), 'dd/MM/yyyy', { locale: fr })}
-                    </TableCell>
-                    <TableCell className="text-slate-300">
-                      {contract.agence}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleViewContract(contract)}
-                          className="text-blue-400 hover:text-blue-300 hover:bg-blue-400/10"
-                          title="Voir les détails"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleAiGenerate(contract.id)}
-                          className="text-purple-400 hover:text-purple-300 hover:bg-purple-400/10"
-                          title="Améliorer avec l'IA"
-                        >
-                          <Brain className="h-4 w-4" />
-                        </Button>
-
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleContractDelete(contract.id)}
-                          disabled={updatingContractId === contract.id}
-                          className="text-red-400 hover:text-red-300 hover:bg-red-400/10"
-                          title="Supprimer"
-                        >
-                          {updatingContractId === contract.id ? (
-                            <div className="w-4 h-4 border-2 border-red-400/30 border-t-red-400 rounded-full animate-spin" />
-                          ) : (
-                            <Trash2 className="h-4 w-4" />
-                          )}
-                        </Button>
-                      </div>
+                {filteredContracts.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-8 text-slate-400">
+                      {searchTerm || statusFilter !== "all" 
+                        ? "Aucun contrat ne correspond à vos critères de recherche"
+                        : "Aucun contrat disponible"
+                      }
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  filteredContracts.map((contract) => (
+                    <TableRow key={contract.id} className="hover:bg-slate-50 transition-colors">
+                      <TableCell className="font-medium text-slate-900">
+                        {contract.client}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                          {contract.type}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="font-semibold text-slate-900">
+                        {formatCurrency(contract.montant)}
+                      </TableCell>
+                      <TableCell>
+                        <Badge 
+                          variant="outline" 
+                          className={getStatusColor(contract.statut)}
+                        >
+                          {getStatusLabel(contract.statut)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-slate-600">
+                        {format(new Date(contract.date_decision), 'dd/MM/yyyy', { locale: fr })}
+                      </TableCell>
+                      <TableCell className="text-slate-600">
+                        {contract.agence}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleViewContract(contract)}
+                            className="text-slate-600 hover:text-orange-600 hover:bg-orange-50"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          {contract.file_path && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-slate-600 hover:text-green-600 hover:bg-green-50"
+                            >
+                              <Download className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </div>
         </CardContent>
       </Card>
 
-      {/* Dialogs */}
+      {/* Dialog de détails du contrat */}
       {selectedContract && (
         <ContractDetailDialog
           contract={selectedContract}
           open={detailDialogOpen}
           onOpenChange={setDetailDialogOpen}
-          onContractUpdate={handleContractUpdate}
         />
       )}
-      
-      <AiContractGenerator
-        open={aiGeneratorOpen}
-        onOpenChange={setAiGeneratorOpen}
-        contractId={aiContractId}
-        onContractGenerated={() => {
-          // Refresh contracts list if needed
-        }}
-      />
     </>
   );
 };

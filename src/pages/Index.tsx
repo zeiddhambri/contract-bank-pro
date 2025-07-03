@@ -14,8 +14,9 @@ import CreateContractDialog from "@/components/CreateContractDialog";
 import AiAssistantSheet from "@/components/AiAssistantSheet";
 import AiContractGenerator from "@/components/AiContractGenerator";
 import OrganizationBrandingManager from "@/components/OrganizationBrandingManager";
+import ClauseManager from "@/pages/ClauseManager";
 import { Button } from "@/components/ui/button";
-import { Plus, MessageCircle, Brain, Palette } from "lucide-react";
+import { Plus, MessageCircle, Brain, Palette, FileText } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -104,6 +105,13 @@ const Index = () => {
               Contrats
             </TabsTrigger>
             <TabsTrigger 
+              value="clauses" 
+              className="px-6 py-2 text-slate-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-600 data-[state=active]:to-red-600 data-[state=active]:text-white"
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              Clauses Jurix
+            </TabsTrigger>
+            <TabsTrigger 
               value="dashboard" 
               className="px-6 py-2 text-slate-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-600 data-[state=active]:to-red-600 data-[state=active]:text-white"
             >
@@ -151,6 +159,9 @@ const Index = () => {
           <div className="animate-fade-in-up">
             <TabsContent value="contracts">
               <ContractList key={refreshTrigger} />
+            </TabsContent>
+            <TabsContent value="clauses">
+              <ClauseManager />
             </TabsContent>
             <TabsContent value="dashboard">
               <DashboardStats />
