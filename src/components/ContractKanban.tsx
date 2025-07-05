@@ -9,32 +9,32 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Calendar, Euro, User, MoreHorizontal } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { Tables } from '@/integrations/supabase/types';
 
-interface Contract {
-  id: string;
-  client: string;
-  type: string;
-  montant: number;
-  statut: string;
-  date_decision: string;
+type Contract = Tables<'contracts'> & {
   priority: string;
-  assigned_to?: string;
   tags: string[];
-}
+};
 
 const ContractKanban = () => {
   const [draggedItem, setDraggedItem] = useState<Contract | null>(null);
 
-  const { data: contracts, isLoading } = useQuery<Contract[]>({
+  const { data: contracts, isLoading } = useQuery({
     queryKey: ['contracts-kanban'],
-    queryFn: async () => {
+    queryFn: async (): Promise<Contract[]> => {
       const { data, error } = await supabase
         .from('contracts')
         .select('*')
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data || [];
+      
+      // Transform data to match our Contract type
+      return (data || []).map(contract => ({
+        ...contract,
+        priority: 'medium',
+        tags: []
+      }));
     },
   });
 
@@ -75,7 +75,6 @@ const ContractKanban = () => {
   const handleDrop = (e: React.DragEvent, newStatus: string) => {
     e.preventDefault();
     if (draggedItem && draggedItem.statut !== newStatus) {
-      // Ici on mettrait à jour le statut du contrat
       console.log(`Moving contract ${draggedItem.id} to ${newStatus}`);
     }
     setDraggedItem(null);
@@ -160,13 +159,6 @@ const ContractKanban = () => {
                             {format(new Date(contract.date_decision), 'dd MMM yyyy', { locale: fr })}
                           </span>
                         </div>
-
-                        {contract.assigned_to && (
-                          <div className="flex items-center gap-1">
-                            <User className="h-3 w-3" />
-                            <span>Assigné</span>
-                          </div>
-                        )}
                       </div>
 
                       {contract.tags && contract.tags.length > 0 && (

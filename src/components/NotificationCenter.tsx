@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Bell, Check, X, AlertTriangle, Info, CheckCircle, XCircle } from 'lucide-react';
+import { Bell, Check, AlertTriangle, Info, CheckCircle, XCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
@@ -22,9 +22,9 @@ interface Notification {
 const NotificationCenter = () => {
   const queryClient = useQueryClient();
 
-  const { data: notifications, isLoading } = useQuery<Notification[]>({
+  const { data: notifications, isLoading } = useQuery({
     queryKey: ['notifications'],
-    queryFn: async () => {
+    queryFn: async (): Promise<Notification[]> => {
       const { data, error } = await supabase
         .from('notifications')
         .select('*')
