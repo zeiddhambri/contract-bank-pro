@@ -953,9 +953,33 @@ if ((quota?.calls ?? 0) >= DAILY_LIMIT) return json({ error: 'quota_exceeded' },
 
 ### Annexe D — Sources du benchmark
 
-- Comparatifs CLM 2025-2026 et positionnements (ContractSafe, Haqq, Redbrick Labs, Pactly, Bind, ERP Research, G2) : différenciateurs, limites, notes utilisateurs, fourchettes de prix et temps d'implémentation d'Ironclad, Juro, LinkSquares, Evisort/Workday, DocuSign CLM, ContractSafe, ContractWorks, Agiloft.
-- Documentation Ironclad : **Obligations Dashboard** (filtres, vues sauvegardées, propriétaire nommé), Dynamic Repository, Jurist, ClickWrap, e-signature native et piste d'audit ; article « Contract Obligation Tracking » (champs minimaux d'une obligation : description, responsable, échéance/fréquence, contrat et clause liés, statut, contact d'escalade ; dashboards 30/60/90 jours ; « les obligations sans propriétaire sont celles qu'on rate »).
-- Pratiques e-signature conformes **eIDAS/ESIGN** (niveaux SES/AES/QES ; contenu d'une piste d'audit : e-mail du signataire, IP, horodatage ISO 8601, **hash SHA-256**, méthode de signature, user-agent ; rétention longue ; industries financières : exigence non négociable).
-- **WCAG 2.2** : nouveaux critères AA 2.5.7 (Dragging Movements), 2.5.8 (Target Size 24×24), 2.4.11 (Focus Not Obscured), 3.3.8 (Accessible Authentication) ; AAA 2.4.13 (Focus Appearance : 2 px, contraste 3:1).
+**Comparatifs de marché CLM 2025-2026** (différenciateurs, limites, notes, prix, délais d'implémentation)
+- ContractSafe — *16 Best Contract Management Software* : https://www.contractsafe.com/blog/best-clm-software
+- Haqq — *CLM Software: 2026 Benchmark* (tableau des notes G2/Capterra/Gartner ; Juro ≈ 60 % d'utilisateurs quotidiens non juristes ; panorama IA par plateforme) : https://www.haqq.ai/blog/contract-lifecycle-management-software
+- Redbrick Labs — *Best Contract Management Software With Top-tier Usability* (Juro, SpotDraft, Contractbook, Oneflow, PandaDoc, Ironclad, LinkSquares, DocuSign, Agiloft, Icertis + grille d'évaluation UX) : https://www.redbricklabs.io/blog/best-contract-management-software-options-with-top-tier-usability
+- Pactly — *Top 10 CLM Software* : https://www.pactly.com/blog/top-10-contract-lifecycle-management-software-2026
+- Concord — *Best CLM Software* (prix et délais d'implémentation comparés) : https://www.concord.app/best-contract-lifecycle-management-software/
+- Bind — *Ironclad Alternatives* (coût total 3 ans, setup 1-2 semaines vs 2-3 mois, UX) : https://bindlegal.com/resources/comparisons/ironclad-alternatives/
+- ERP Research — *Ironclad vs Juro* (matrice capability par capability) : https://www.erpresearch.com/erp-add-ons/clm/ironclad-vs-juro
+- G2 — catégorie *Contract Lifecycle Management* : https://www.g2.com/categories/contract-lifecycle-management-clm
+
+**Ironclad** (workflow, Dynamic Repository, Jurist, obligations)
+- Support Ironclad — *Obligations Overview* (obligations typées, propriétaire, dashboard filtrable, **vues sauvegardées**) : https://support.ironcladapp.com/hc/en-us/articles/31128326700183-Obligations-Overview
+- Ironclad — *Contract Obligation Tracking Made Simple* (champs minimaux d'une obligation, dashboards 30/60/90, « les obligations sans propriétaire sont celles qu'on rate ») : https://ironcladapp.com/resources/articles/contract-obligation-tracking
+- Ironclad — *Contract Data Extraction* (métadonnées extraites, recherche plein texte, alertes d'échéance) : https://ironcladapp.com/journal/contract-data/contract-data-extraction
+- Legal Technology Hub — fiche Ironclad (repository, search, analytics, obligations, Clickwrap, e-signature + audit trail) : https://www.legaltechnologyhub.com/vendors/ironclad/
+- Contrary Research — *Ironclad Business Breakdown* (« 194+ AI-detected contract metadata properties », universal search, KPIs/renewals/obligations) : https://research.contrary.com/company/ironclad
+- *Ironclad in 2026: Dynamic Repository, Jurist* (3 couches produit ; réserve sur la lourdeur de configuration) : https://agenticcontractreview.com/vs-ironclad/
+
+**Signature électronique, preuve et conformité (eIDAS / ESIGN / SOC 2)**
+- Signbee — *E-Signature API Compliance Checklist* (niveaux SES/AES/QES ; contenu d'une piste d'audit : e-mail, IP, horodatage ISO 8601, **hash SHA-256**, méthode, user-agent ; rétention 7 ans+) : https://signb.ee/blog/e-signature-api-compliance-checklist
+- Contracko — *Contract management software with e-signature* (eIDAS/ESIGN, RGPD, RBAC, chiffrement, **2FA**, timeline unique pré/post-signature) : https://contracko.com/blog/contract-management-software-with-e-signature
+- Zignt — *E-Signature Software with Audit Trail* (services financiers : l'audit trail est une infrastructure de conformité, pas une option) : https://zignt.com/blog/e-signature-software-with-audit-trail
+
+**Accessibilité — WCAG 2.2**
+- GetWCAG — *WCAG 2.2 Checklist* (2.5.7 Dragging Movements, 2.5.8 Target Size 24×24, 2.4.11 Focus Not Obscured, 3.3.8 Accessible Authentication, 2.4.13 Focus Appearance) : https://getwcag.com/en/wcag-2-2-guidelines
+- Deque University — *WCAG 2.2 Updates* (intent et exemples d'implémentation) : https://dequeuniversity.com/resources/wcag-2.2/
+
+**Performance web** (budgets, Core Web Vitals, code splitting) : https://web.dev/explore/performance et https://web.dev/articles/vitals
 
 > Note de méthode : les capacités concurrentes citées proviennent de sources publiques de 2025-2026 ; elles doivent être re-vérifiées avant tout argumentaire commercial. Les constats sur JURIX, eux, sont reproductibles avec les commandes indiquées en §0.
