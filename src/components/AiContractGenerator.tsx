@@ -125,7 +125,7 @@ const AiContractGenerator: React.FC<AiContractGeneratorProps> = ({
       return payload;
     },
     onSuccess: (data) => {
-      setGeneratedContent(data.generated_content);
+      setGeneratedContent(data.generated_content ?? '');
       setActiveTab('result');
       toast({
         title: 'Succès',

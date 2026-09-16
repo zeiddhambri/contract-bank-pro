@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { useForm } from 'react-hook-form';
+import type { Json } from '@/integrations/supabase/types';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import {
@@ -90,7 +91,7 @@ const AddFieldDialog: React.FC<AddFieldDialogProps> = ({
 
       const nextOrder = (existingFields?.[0]?.display_order || 0) + 1;
 
-      let fieldOptions = null;
+      let fieldOptions: Json | null = null;
       if (data.field_options && data.field_type === 'select') {
         try {
           const options = data.field_options.split('\n').filter(opt => opt.trim());

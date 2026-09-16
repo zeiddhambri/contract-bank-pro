@@ -1,0 +1,63 @@
+# ============================================================================
+# Filet de qualité minimal (R5.1 / R5.2)
+# ----------------------------------------------------------------------------
+# Bloquant : type-check en mode strict et build de production.
+# Non bloquant (pour l'instant) : ESLint, qui remonte 24 erreurs héritées.
+# L'étape lint deviendra bloquante quand ce compteur sera à zéro — sinon une CI
+# rouge en permanence est ignorée, donc inutile.
+# ============================================================================
+name: quality
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  web:
+    name: Type-check, lint et build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Dépendances
+        run: npm ci
+
+      - name: Type-check (strict)
+        run: npm run typecheck
+
+      - name: ESLint (informatif tant que la dette héritée n'est pas purgée)
+        continue-on-error: true
+        run: npx eslint . --format compact
+
+      - name: Build de production
+        run: npm run build
+        env:
+          # Valeurs factices : le build vérifie la compilation, pas la connexion.
+          VITE_SUPABASE_URL: https://example.supabase.co
+          VITE_SUPABASE_ANON_KEY: build-only-placeholder-key
+
+  functions:
+    name: Edge Functions (syntaxe)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Vérifier que les fonctions se chargent (deno check si disponible)
+        # Imports depuis esm.sh : étape informative, jamais bloquante.
+        continue-on-error: true
+        run: |
+          if command -v deno >/dev/null 2>&1; then
+            deno check --no-lock supabase/functions/*/index.ts supabase/functions/_shared/*.ts
+          else
+            echo "deno absent de l'image : vérification ignorée (npm i -g deno pour l'activer)"
+          fi

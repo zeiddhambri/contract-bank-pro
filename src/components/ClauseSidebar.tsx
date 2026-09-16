@@ -28,7 +28,7 @@ interface Clause {
 
 interface ClauseSidebarProps {
   clauses: Clause[];
-  selectedClause?: Clause;
+  selectedClause?: Clause | null;
   onSelectClause: (clause: Clause) => void;
   onNewClause: () => void;
   categories: string[];

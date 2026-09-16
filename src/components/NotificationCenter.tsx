@@ -14,9 +14,10 @@ type NotificationType = 'info' | 'warning' | 'error' | 'success';
 
 const NOTIFICATION_TYPES: NotificationType[] = ['info', 'warning', 'error', 'success'];
 
-type Notification = Omit<Tables<'notifications'>, 'type' | 'is_read'> & {
+type Notification = Omit<Tables<'notifications'>, 'type' | 'is_read' | 'created_at'> & {
   type: NotificationType;
   is_read: boolean;
+  created_at: string;
 };
 
 const NotificationCenter = () => {
@@ -36,6 +37,7 @@ const NotificationCenter = () => {
       return (data ?? []).map((row) => ({
         ...row,
         is_read: row.is_read ?? false,
+        created_at: row.created_at ?? new Date().toISOString(),
         type: (NOTIFICATION_TYPES.includes(row.type as NotificationType)
           ? row.type
           : 'info') as NotificationType,

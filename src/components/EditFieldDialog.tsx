@@ -6,7 +6,7 @@ import { toast } from '@/hooks/use-toast';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Tables } from '@/integrations/supabase/types';
+import type { Json, Tables } from '@/integrations/supabase/types';
 import {
   Dialog,
   DialogContent,
@@ -82,7 +82,7 @@ const EditFieldDialog: React.FC<EditFieldDialogProps> = ({
 
   const updateFieldMutation = useMutation({
     mutationFn: async (data: FieldFormData) => {
-      let fieldOptions = null;
+      let fieldOptions: Json | null = null;
       if (data.field_options && data.field_type === 'select') {
         try {
           const options = data.field_options.split('\n').filter(opt => opt.trim());

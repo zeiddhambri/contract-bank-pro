@@ -29,13 +29,15 @@ Ce dossier contient l'audit produit complet et le plan d'amélioration qui en d�
 |---|---|---|---|
 | **R1** | Durcissement sécurité (RLS, storage privé, Functions authentifiées + quota, secrets, en-têtes) | ✅ **Implémenté** le 2026-09-16 — à déployer puis vérifier | `supabase/migrations/20260915120000-harden-security.sql`, `supabase/functions/_shared/guard.ts`, `src/lib/storage.ts`, `src/lib/audit-log.ts`, `public/_headers`, `.env.example` + runbook [`VERIFICATIONS-SECURITE.md`](./VERIFICATIONS-SECURITE.md) |
 | **R2** | Cycle de vie unique des contrats + intégrité des données (énuméré SQL, matrice de transitions, historique, devise, référence immuable, rappels idempotents) | ✅ **Implémenté** le 2026-09-16 — à déployer **après** R1 (conversion de données : staging d'abord) | `supabase/migrations/20260916090000-contract-lifecycle-integrity.sql`, `src/lib/contract-status.ts`, `src/lib/contract-metrics.ts` + guide [`MIGRATION-R2-CYCLE-DE-VIE.md`](./MIGRATION-R2-CYCLE-DE-VIE.md) |
+| **R5.1 / R5.2** | Filet de qualité : `strict` activé dans TypeScript + CI (type-check et build bloquants, ESLint informatif) | ✅ **Implémenté** le 2026-09-16 | `tsconfig.app.json`, `tsconfig.json`, `.github/workflows/quality.yml` |
 | R3 → R20 | CRUD complet, référentiel, échéances, IA, workflow, design system, accessibilité, i18n… | ⏳ À faire | `backlog-priorise.csv` |
 
 Effets mesurés des chantiers R1 + R2 (avant → après) :
 
 | Indicateur | Avant | Après |
 |---|---|---:|
-| Erreurs TypeScript (`npm run typecheck`) | 21 | **5** (toutes dans le composant vendu `ui/chart.tsx`) |
+| Erreurs TypeScript (`npm run typecheck`) | 21 (en mode non strict) | **0**, avec `"strict": true` activé (`ui/chart.tsx`, composant vendu jamais importé, est exclu du contrôle) |
+| Vérification automatique à chaque push | aucune (0 CI) | GitHub Actions `quality.yml` : type-check strict + build bloquants, ESLint informatif |
 | Erreurs ESLint | 53 | **24** |
 | Bundle JS (gzip) | 382 kB | **364 kB** (JSZip et l'appel OpenAI sortis du graphe ; la fiche contrat et le Kanban y sont désormais branchés) |
 | URLs / clés en dur dans `src` | 3 | **0** |
