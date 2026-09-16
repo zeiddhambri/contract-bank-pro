@@ -8,16 +8,16 @@ import { Badge } from '@/components/ui/badge';
 import { Bell, Check, AlertTriangle, Info, CheckCircle, XCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import type { Tables } from '@/integrations/supabase/types';
 
-interface Notification {
-  id: string;
-  title: string;
-  message: string;
-  type: 'info' | 'warning' | 'error' | 'success';
+type NotificationType = 'info' | 'warning' | 'error' | 'success';
+
+const NOTIFICATION_TYPES: NotificationType[] = ['info', 'warning', 'error', 'success'];
+
+type Notification = Omit<Tables<'notifications'>, 'type' | 'is_read'> & {
+  type: NotificationType;
   is_read: boolean;
-  contract_id?: string;
-  created_at: string;
-}
+};
 
 const NotificationCenter = () => {
   const queryClient = useQueryClient();
@@ -32,7 +32,14 @@ const NotificationCenter = () => {
         .limit(10);
       
       if (error) throw error;
-      return data || [];
+      // Le type est contraint en base ; on l'aligne sur l'union attendue par l'UI.
+      return (data ?? []).map((row) => ({
+        ...row,
+        is_read: row.is_read ?? false,
+        type: (NOTIFICATION_TYPES.includes(row.type as NotificationType)
+          ? row.type
+          : 'info') as NotificationType,
+      }));
     },
   });
 

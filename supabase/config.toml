@@ -1,1 +1,15 @@
 project_id = "cqyuhztxmaawzzhdartp"
+
+# ============================================================================
+# R1.6 · Toutes les Edge Functions exigent un JWT utilisateur valide.
+# Le client doit utiliser `supabase.functions.invoke(...)` (qui transmet le
+# header Authorization) et non un `fetch` brut.
+# ============================================================================
+[functions.ai-assistant-chat]
+verify_jwt = true
+
+[functions.ai-contract-generator]
+verify_jwt = true
+
+[functions.ai-contract-extraction]
+verify_jwt = true

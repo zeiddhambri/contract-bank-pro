@@ -117,6 +117,38 @@ export type Database = {
           },
         ]
       }
+      ai_usage: {
+        Row: {
+          calls: number
+          day: string
+          tokens: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          calls?: number
+          day?: string
+          tokens?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          calls?: number
+          day?: string
+          tokens?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_usage_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action: string
@@ -307,6 +339,54 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          contract_id: string | null
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          message: string
+          title: string
+          type: string
+          user_id: string | null
+        }
+        Insert: {
+          contract_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message: string
+          title: string
+          type: string
+          user_id?: string | null
+        }
+        Update: {
+          contract_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          title?: string
+          type?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organization_branding: {
         Row: {
           accent_color: string | null
@@ -482,9 +562,39 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      generate_reference_decision: {
-        Args: Record<PropertyKey, never>
+      // ⚠️ Ajouts manuels en attendant `npm run db:types` (migration
+      // 20260915120000-harden-security.sql). Toute régénération des types
+      // reproduira ces entrées depuis le schéma réel.
+      ai_consume_quota: {
+        Args: { p_tokens?: number }
+        Returns: number
+      }
+      create_notification: {
+        Args: {
+          p_user_id: string
+          p_title: string
+          p_message: string
+          p_type?: string
+          p_contract_id?: string
+        }
         Returns: string
+      }
+      generate_reference_decision: {
+        Args: { p_bank_id: string }
+        Returns: string
+      }
+      record_ai_extraction: {
+        Args: {
+          p_contract_id: string
+          p_extraction_type: string
+          p_extracted_data: Json
+          p_confidence?: number
+        }
+        Returns: string
+      }
+      write_audit: {
+        Args: { p_action: string; p_details?: Json }
+        Returns: undefined
       }
       get_my_bank_id: {
         Args: Record<PropertyKey, never>

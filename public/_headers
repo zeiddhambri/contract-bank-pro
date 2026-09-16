@@ -1,0 +1,29 @@
+# ============================================================================
+# En-têtes de sécurité (R1.9 / défaut B12)
+# ----------------------------------------------------------------------------
+# Format Netlify / Cloudflare Pages (fichier servi à la racine du build).
+# Pour un autre hébergeur, transposer ces en-têtes :
+#   · nginx  : add_header … always;            (server block)
+#   · Vercel : vercel.json → headers
+#   · Apache : Header always set …             (.htaccess / vhost)
+#
+# Les origines Supabase sont volontairement en wildcard (*.supabase.co) pour
+# rester indépendantes de l'environnement : l'URL exacte du projet est portée
+# par VITE_SUPABASE_URL côté client (.env). Resserrer vers l'URL nominale du
+# projet en production est recommandé.
+# ============================================================================
+
+/*
+  # Politique de contenu : aucune ressource tierce non déclarée.
+  # 'unsafe-inline' sur style-src est requis par le <style> de la landing et
+  # par les styles injectés par Radix UI — à retirer dès que R11/R20 les auront
+  # remplacés par des classes (nonce ou hashes alors possibles).
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://*.supabase.co; media-src 'self' blob: https://*.supabase.co; connect-src 'self' https://*.supabase.co wss://*.supabase.co; worker-src 'self' blob:; frame-src 'self' blob: https://*.supabase.co; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=()
+  Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Resource-Policy: same-origin
+  X-Permitted-Cross-Domain-Policies: none

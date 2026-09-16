@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { MessageCircle, Send } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AiAssistantSheetProps {
   open: boolean;
@@ -58,38 +59,44 @@ const AiAssistantSheet: React.FC<AiAssistantSheetProps> = ({
     setLoading(true);
 
     try {
-      const res = await fetch(
-        "https://cqyuhztxmaawzzhdartp.functions.supabase.co/ai-assistant-chat",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            messages: [...messages.slice(1), userMsg] // Ignore greeting for OpenAI
-              .map(({ role, content }) => ({ role, content })),
-          }),
-        }
-      );
+      // `functions.invoke` transmet le JWT utilisateur : la fonction est
+      // protégée (verify_jwt = true), appliquée au périmètre de l'utilisateur
+      // et soumise au quota quotidien (R1.6).
+      const { data, error } = await supabase.functions.invoke("ai-assistant-chat", {
+        body: {
+          messages: [...messages.slice(1), userMsg] // Ignore greeting for OpenAI
+            .map(({ role, content }) => ({ role, content })),
+        },
+      });
 
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data?.error || "Erreur lors de la requête à l'IA");
+      if (error) {
+        throw new Error(
+          error.message || "Erreur lors de la requête à l'IA"
+        );
       }
+
+      const answer =
+        (data as { answer?: string } | null)?.answer ??
+        "Aucune réponse de l'assistant.";
+
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: data.answer },
+        { role: "assistant", content: answer },
       ]);
-    } catch (err: any) {
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Erreur inattendue du service IA.";
+
       setMessages((prev) => [
         ...prev,
         {
           role: "assistant",
-          content:
-            "❌ Erreur lors de la génération de la réponse. Merci de réessayer plus tard.",
+          content: `❌ ${message}`,
         },
       ]);
       toast({
         title: "Erreur Assistant IA",
-        description: err?.message ?? "Erreur via OpenAI.",
+        description: message,
         variant: "destructive",
       });
     } finally {

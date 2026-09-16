@@ -18,7 +18,7 @@ import { toast } from "sonner";
 import ClauseEditor from "@/components/ClauseEditor";
 import ClauseSidebar from "@/components/ClauseSidebar";
 import { Clause, DEFAULT_CATEGORIES } from "@/types/clause";
-import { aiService, exportUtils } from "@/lib/ai-utils";
+import { exportUtils } from "@/lib/ai-utils";
 
 const ClauseManager = () => {
   const [clauses, setClauses] = useState<Clause[]>([]);

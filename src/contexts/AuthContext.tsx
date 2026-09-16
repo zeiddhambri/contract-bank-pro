@@ -1,7 +1,8 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, Session } from '@supabase/supabase-js';
+import type { AuthError, Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { AUDIT_ACTIONS, logAction } from '@/lib/audit-log';
 import { useToast } from '@/hooks/use-toast';
 import { Tables } from '@/integrations/supabase/types';
 
@@ -11,13 +12,16 @@ interface AuthContextType {
   userProfile: Tables<'profiles'> | null;
   bank: Tables<'banks'> | null;
   userRole: Tables<'profiles'>['role'] | null;
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signUp: (email: string, password: string) => Promise<{ error: any }>;
+  signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
+  signUp: (email: string, password: string) => Promise<{ error: AuthError | null }>;
   signOut: () => Promise<void>;
-  resetPassword: (email: string) => Promise<{ error: any }>;
+  resetPassword: (email: string) => Promise<{ error: AuthError | null }>;
   loading: boolean;
   isAdmin: boolean;
 }
+
+/** Jointure `profiles` + `banks(*)` renvoyée par Supabase. */
+type ProfileWithBank = Tables<'profiles'> & { banks: Tables<'banks'> | null };
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
@@ -56,7 +60,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           .single();
         
         if (profile) {
-          const { banks: bankData, ...userProfileData } = profile as any;
+          const { banks: bankData, ...userProfileData } = profile as ProfileWithBank;
           setUserProfile(userProfileData);
           setBank(bankData);
         } else {
@@ -86,7 +90,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             .single();
           
           if (profile) {
-            const { banks: bankData, ...userProfileData } = profile as any;
+            const { banks: bankData, ...userProfileData } = profile as ProfileWithBank;
             setUserProfile(userProfileData);
             setBank(bankData);
           } else {
@@ -116,11 +120,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         variant: "destructive",
       });
     } else {
-      const isAdminUser = email === 'zeid.dhambri@gmail.com';
+      // Le rôle provient exclusivement de profiles.role (fin de l'admin codé en
+      // dur sur un e-mail personnel — défaut B09).
       toast({
         title: "Connexion réussie",
-        description: isAdminUser ? "Bienvenue Administrateur !" : "Vous êtes maintenant connecté",
+        description: "Vous êtes maintenant connecté",
       });
+
+      // Les connexions font partie de la piste d'audit (exigence bancaire).
+      void logAction(AUDIT_ACTIONS.authSignIn, { method: 'password' });
     }
 
     return { error };
@@ -154,6 +162,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = async () => {
+    // Journalisé AVANT la fermeture de session (sinon plus de JWT disponible).
+    await logAction(AUDIT_ACTIONS.authSignOut, {});
+
     const { error } = await supabase.auth.signOut();
     if (!error) {
       setUserProfile(null);
@@ -171,6 +182,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: redirectUrl,
     });
+
+    // Les tentatives de réinitialisation sont tracées (échec compris) : c'est un
+    // signal de compromission de compte, pas une donnée sensible.
+    await logAction(AUDIT_ACTIONS.authResetPassword, { email, success: !error });
 
     if (error) {
       toast({

@@ -8,7 +8,7 @@ import { Tables, TablesUpdate } from "@/integrations/supabase/types";
 
 interface ContractDetailFormProps {
   editedContract: Tables<'contracts'>;
-  handleFieldChange: (field: keyof TablesUpdate<'contracts'>, value: any) => void;
+  handleFieldChange: (field: keyof TablesUpdate<'contracts'>, value: string | number | null) => void;
   isSaving: boolean;
 }
 

@@ -23,6 +23,27 @@ Ce dossier contient l'audit produit complet et le plan d'amélioration qui en d�
 
 > Règle de pilotage : aucune fonctionnalité nouvelle (P2) ne démarre tant que le P0 n'est pas vert.
 
+## Suivi d'implémentation
+
+| Réf | Chantier | Statut | Où regarder |
+|---|---|---|---|
+| **R1** | Durcissement sécurité (RLS, storage privé, Functions authentifiées + quota, secrets, en-têtes) | ✅ **Implémenté** le 2026-09-16 — à déployer puis vérifier | `supabase/migrations/20260915120000-harden-security.sql`, `supabase/functions/_shared/guard.ts`, `src/lib/storage.ts`, `src/lib/audit-log.ts`, `public/_headers`, `.env.example` + runbook [`VERIFICATIONS-SECURITE.md`](./VERIFICATIONS-SECURITE.md) |
+| R2 | Intégrité des données (statuts uniques, devise, référence par banque) | ⏳ À faire — **bloquant fonctionnel** : la contrainte `contracts_statut_check` peut rejeter la création d'un contrat | §R2 du rapport |
+| R3 → R20 | CRUD complet, référentiel, échéances, IA, workflow, design system, accessibilité, i18n… | ⏳ À faire | `backlog-priorise.csv` |
+
+Effets mesurés du chantier R1 sur la dette technique (avant → après) :
+
+| Indicateur | Avant | Après |
+|---|---:|---:|
+| Erreurs TypeScript (`npm run typecheck`) | 21 | **5** (toutes dans le composant vendu `ui/chart.tsx`) |
+| Erreurs ESLint | 53 | **37** |
+| Bundle JS (gzip) | 382 kB | **352 kB** (JSZip sorti du graphe d'imports) |
+| URLs / clés en dur dans `src` | 3 | **0** |
+| Endpoints IA sans authentification | 3 | **0** |
+| Usages de `service_role` dans les Functions | 2 | **0** |
+| Accès publics à un document (`getPublicUrl`) | 1 | **0** (URLs signées 60 s) |
+| Actions tracées dans la piste d'audit | piste en écriture libre, non consultable | **16 actions** (13 côté client : création/modif/consultation de contrat, téléversement, téléchargement, remplacement de document, IA, connexion, déconnexion, réinitialisation MDP ; 3 côté serveur dans les Edge Functions) — écriture via `public.write_audit()` `SECURITY DEFINER`, auteur/horodatage/banque imposés par le serveur |
+
 ## Reproduction des mesures
 
 ```bash

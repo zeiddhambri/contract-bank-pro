@@ -10,11 +10,11 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { AlertTriangle } from "lucide-react";
 import { Tables, TablesUpdate } from "@/integrations/supabase/types";
-import { supabase } from "@/integrations/supabase/client";
-import JSZip from "jszip";
 import ContractDetailForm from "./ContractDetailForm";
 import ContractFileUpload from "./ContractFileUpload";
 import ContractAlertCreator from "./ContractAlertCreator";
+import { downloadContractFile, replaceContractFile } from "@/lib/storage";
+import { AUDIT_ACTIONS, logAction } from "@/lib/audit-log";
 
 interface ContractDetailDialogProps {
   open: boolean;
@@ -35,18 +35,29 @@ const ContractDetailDialog: React.FC<ContractDetailDialogProps> = ({
   const [customAlertMessage, setCustomAlertMessage] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   React.useEffect(() => {
     if (open) {
       setEditedContract(contract);
       setFile(null);
       setIsUploading(false);
+      setIsDownloading(false);
       setCustomAlertMessage('');
+
+      // Traçabilité de la consultation (exigence d'audit bancaire — D18).
+      void logAction(AUDIT_ACTIONS.contractView, {
+        contractId: contract.id,
+        reference: contract.reference_decision,
+      });
     }
   }, [contract, open]);
 
-  const handleFieldChange = (field: keyof TablesUpdate<'contracts'>, value: any) => {
-    setEditedContract(prev => ({ ...prev, [field]: value as any }));
+  const handleFieldChange = (
+    field: keyof TablesUpdate<'contracts'>,
+    value: string | number | null,
+  ) => {
+    setEditedContract(prev => ({ ...prev, [field]: value }) as Tables<'contracts'>);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -91,24 +102,24 @@ const ContractDetailDialog: React.FC<ContractDetailDialogProps> = ({
     if (file) {
       setIsUploading(true);
       try {
-        const zip = new JSZip();
-        zip.file(file.name, file);
-        const zippedBlob = await zip.generateAsync({ type: "blob" });
-        const fileName = `${file.name}.zip`;
-        const newFilePath = `${Date.now()}-${fileName}`;
+        const newFilePath = await replaceContractFile({
+          bankId: contract.bank_id,
+          contractId: contract.id,
+          file,
+          previousPath: contract.file_path,
+        });
 
-        const { error: uploadError } = await supabase.storage
-          .from('contract_files')
-          .upload(newFilePath, zippedBlob);
-
-        if (uploadError) {
-          throw uploadError;
-        }
         updates.file_path = newFilePath;
-      } catch (error: any) {
+
+        await logAction(AUDIT_ACTIONS.documentReplace, {
+          contractId: contract.id,
+          reference: contract.reference_decision,
+          fileName: file.name,
+        });
+      } catch (error) {
         toast({
           title: "Erreur de téléversement",
-          description: error.message,
+          description: error instanceof Error ? error.message : "Téléversement impossible.",
           variant: "destructive",
         });
         setIsUploading(false);
@@ -119,6 +130,14 @@ const ContractDetailDialog: React.FC<ContractDetailDialogProps> = ({
 
     if (Object.keys(updates).length > 0 || (file && updates.file_path)) {
       await onSaveChanges(contract.id, updates);
+
+      // R1.3 : l'auteur, l'horodatage et la banque sont imposés côté serveur par
+      // public.write_audit() — la piste n'est pas falsifiable depuis le client.
+      // On journalise les champs modifiés, pas leurs valeurs (déjà en base).
+      await logAction(AUDIT_ACTIONS.contractUpdate, {
+        contractId: contract.id,
+        fields: Object.keys(updates),
+      });
     }
     
     onOpenChange(false);
@@ -141,9 +160,24 @@ const ContractDetailDialog: React.FC<ContractDetailDialogProps> = ({
     setCustomAlertMessage('');
   };
 
-  const getFileUrl = (filePath: string) => {
-    const { data } = supabase.storage.from('contract_files').getPublicUrl(filePath);
-    return data.publicUrl;
+  /** Téléchargement via URL signée de courte durée (jamais d'URL publique). */
+  const handleDownload = async (filePath: string) => {
+    setIsDownloading(true);
+    try {
+      await downloadContractFile(filePath);
+      await logAction(AUDIT_ACTIONS.documentDownload, {
+        contractId: contract.id,
+        reference: contract.reference_decision,
+      });
+    } catch (error) {
+      toast({
+        title: "Téléchargement impossible",
+        description: error instanceof Error ? error.message : "Le lien sécurisé n'a pas pu être généré.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   return (
@@ -164,7 +198,8 @@ const ContractDetailDialog: React.FC<ContractDetailDialogProps> = ({
             filePath={contract.file_path}
             file={file}
             isUploading={isUploading}
-            getFileUrl={getFileUrl}
+            isDownloading={isDownloading}
+            onDownload={handleDownload}
             handleFileChange={handleFileChange}
           />
           <ContractAlertCreator

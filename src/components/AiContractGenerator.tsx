@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { AUDIT_ACTIONS, logAction } from '@/lib/audit-log';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import {
@@ -38,6 +39,24 @@ const CONTRACT_CATEGORIES = [
   { value: 'commercial', label: 'Commercial' },
   { value: 'services', label: 'Services' },
 ];
+
+interface GenerationParameters {
+  client_name: string;
+  amount: string;
+  duration: string;
+  purpose: string;
+  additional_clauses: string;
+  existing_content: string;
+}
+
+interface GenerationResult {
+  success?: boolean;
+  generated_content?: string;
+  generation_type?: string;
+  template_used?: string;
+  disclaimer?: string;
+  error?: string;
+}
 
 const GENERATION_TYPES = [
   { value: 'draft', label: 'Nouvelle rédaction', icon: FileText },
@@ -83,26 +102,27 @@ const AiContractGenerator: React.FC<AiContractGeneratorProps> = ({
 
   // Generate contract mutation
   const generateContractMutation = useMutation({
-    mutationFn: async (params: any) => {
-      const response = await fetch(
-        'https://cqyuhztxmaawzzhdartp.functions.supabase.co/ai-contract-generator',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            generation_type: generationType,
-            category,
-            parameters: params,
-            contract_id: contractId,
-          }),
-        }
-      );
+    mutationFn: async (params: GenerationParameters) => {
+      // Appel authentifié (JWT transmis par `functions.invoke`) : la fonction
+      // applique la RLS au périmètre de la banque et le quota quotidien (R1.6).
+      const { data, error } = await supabase.functions.invoke('ai-contract-generator', {
+        body: {
+          generation_type: generationType,
+          category,
+          parameters: params,
+          contract_id: contractId,
+        },
+      });
 
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data?.error || 'Erreur lors de la génération');
+      if (error) {
+        throw new Error(error.message || 'Erreur lors de la génération');
       }
-      return data;
+
+      const payload = data as GenerationResult | null;
+      if (!payload?.generated_content) {
+        throw new Error(payload?.error || 'Aucun contenu généré');
+      }
+      return payload;
     },
     onSuccess: (data) => {
       setGeneratedContent(data.generated_content);
@@ -112,10 +132,10 @@ const AiContractGenerator: React.FC<AiContractGeneratorProps> = ({
         description: 'Contrat généré avec succès !',
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: 'Erreur IA',
-        description: error?.message || 'Impossible de générer le contrat',
+        description: error.message || 'Impossible de générer le contrat',
         variant: 'destructive',
       });
     },
@@ -147,17 +167,25 @@ const AiContractGenerator: React.FC<AiContractGeneratorProps> = ({
 
       if (error) throw error;
 
+      // Un contenu généré par IA appliqué à un contrat est toujours tracé.
+      await logAction(AUDIT_ACTIONS.aiGenerate, {
+        contractId,
+        generationType,
+        category,
+        appliedToDescription: true,
+      });
+
       toast({
         title: 'Succès',
-        description: 'Contrat mis à jour avec le contenu généré !',
+        description: 'Contrat mis à jour avec le contenu généré (à valider par le service juridique).',
       });
       
       onContractGenerated?.();
       onOpenChange(false);
-    } catch (error: any) {
+    } catch {
       toast({
         title: 'Erreur',
-        description: 'Impossible d\'appliquer les modifications',
+        description: "Impossible d'appliquer les modifications",
         variant: 'destructive',
       });
     }
