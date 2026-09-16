@@ -102,9 +102,11 @@ const CreateContractDialog = ({ open, onOpenChange, onContractCreated }: CreateC
       const { data: insertedData, error } = await supabase
         .from("contracts")
         .insert({
-          client: data.client,
+          client: data.client.trim(),
           type: data.type,
           montant: data.montant,
+          // B21 : la devise choisie dans le formulaire était perdue (toujours EUR).
+          currency: data.currency,
           garantie: data.garanties[0]?.type || "aucune",
           garanties: cleanedGaranties,
           agence: data.agence,

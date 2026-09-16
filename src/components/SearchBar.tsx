@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Search, Filter, X } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { CONTRACT_STATUS_OPTIONS } from '@/lib/contract-status';
 
 const SearchBar = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -16,9 +17,11 @@ const SearchBar = () => {
     assignee: ''
   });
 
+  // Recherche globale non branchée : la liste des contrats dispose de ses propres
+  // filtres (phase + statut + texte). Le branchement de cette barre sur toutes
+  // les entités (contrats, clients, références) est le chantier R7 du plan.
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Searching for:', searchTerm, 'with filters:', filters);
   };
 
   const clearFilters = () => {
@@ -88,10 +91,11 @@ const SearchBar = () => {
                   className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md text-sm"
                 >
                   <option value="">Tous les statuts</option>
-                  <option value="draft">Brouillon</option>
-                  <option value="review">En révision</option>
-                  <option value="active">Actif</option>
-                  <option value="expired">Expiré</option>
+                  {CONTRACT_STATUS_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
                 </select>
               </div>
               

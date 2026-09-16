@@ -198,6 +198,7 @@ export type Database = {
         Row: {
           ai_features_enabled: boolean | null
           created_at: string
+          default_currency: string
           domain_config: Json | null
           id: string
           logo_url: string | null
@@ -210,6 +211,7 @@ export type Database = {
         Insert: {
           ai_features_enabled?: boolean | null
           created_at?: string
+          default_currency?: string
           domain_config?: Json | null
           id?: string
           logo_url?: string | null
@@ -222,6 +224,7 @@ export type Database = {
         Update: {
           ai_features_enabled?: boolean | null
           created_at?: string
+          default_currency?: string
           domain_config?: Json | null
           id?: string
           logo_url?: string | null
@@ -277,55 +280,85 @@ export type Database = {
       contracts: {
         Row: {
           agence: string
-          bank_id: string
+          assigned_to: string | null
+          bank_id: string | null
           client: string
           created_at: string
+          currency: string
           date_decision: string
           date_signature: string | null
+          deleted_at: string | null
           description: string | null
+          expiry_date: string | null
           file_path: string | null
           garantie: string
           garanties: Json
           id: string
+          metadata: Json | null
           montant: number
+          payment_terms: string | null
+          priority: string | null
           reference_decision: string
-          statut: string
+          renewal_date: string | null
+          risk_level: string | null
+          statut: Database["public"]["Enums"]["contract_status"]
+          tags: string[] | null
           type: string
           updated_at: string
         }
         Insert: {
           agence: string
-          bank_id: string
+          assigned_to?: string | null
+          bank_id?: string | null
           client: string
           created_at?: string
+          currency?: string
           date_decision?: string
           date_signature?: string | null
+          deleted_at?: string | null
           description?: string | null
+          expiry_date?: string | null
           file_path?: string | null
           garantie: string
           garanties?: Json
           id?: string
+          metadata?: Json | null
           montant: number
-          reference_decision: string
-          statut?: string
+          payment_terms?: string | null
+          priority?: string | null
+          reference_decision?: string
+          renewal_date?: string | null
+          risk_level?: string | null
+          statut?: Database["public"]["Enums"]["contract_status"]
+          tags?: string[] | null
           type: string
           updated_at?: string
         }
         Update: {
           agence?: string
-          bank_id?: string
+          assigned_to?: string | null
+          bank_id?: string | null
           client?: string
           created_at?: string
+          currency?: string
           date_decision?: string
           date_signature?: string | null
+          deleted_at?: string | null
           description?: string | null
+          expiry_date?: string | null
           file_path?: string | null
           garantie?: string
           garanties?: Json
           id?: string
+          metadata?: Json | null
           montant?: number
+          payment_terms?: string | null
+          priority?: string | null
           reference_decision?: string
-          statut?: string
+          renewal_date?: string | null
+          risk_level?: string | null
+          statut?: Database["public"]["Enums"]["contract_status"]
+          tags?: string[] | null
           type?: string
           updated_at?: string
         }
@@ -338,6 +371,103 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      contract_reminders: {
+        Row: {
+          contract_id: string | null
+          created_at: string | null
+          id: string
+          is_sent: boolean | null
+          remind_at: string
+          reminder_type: string
+        }
+        Insert: {
+          contract_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_sent?: boolean | null
+          remind_at: string
+          reminder_type: string
+        }
+        Update: {
+          contract_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_sent?: boolean | null
+          remind_at?: string
+          reminder_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_reminders_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contract_status_history: {
+        Row: {
+          bank_id: string | null
+          changed_at: string
+          changed_by: string | null
+          changed_by_email: string | null
+          contract_id: string
+          from_status: Database["public"]["Enums"]["contract_status"] | null
+          id: string
+          reason: string | null
+          to_status: Database["public"]["Enums"]["contract_status"]
+        }
+        Insert: {
+          bank_id?: string | null
+          changed_at?: string
+          changed_by?: string | null
+          changed_by_email?: string | null
+          contract_id: string
+          from_status?: Database["public"]["Enums"]["contract_status"] | null
+          id?: string
+          reason?: string | null
+          to_status: Database["public"]["Enums"]["contract_status"]
+        }
+        Update: {
+          bank_id?: string | null
+          changed_at?: string
+          changed_by?: string | null
+          changed_by_email?: string | null
+          contract_id?: string
+          from_status?: Database["public"]["Enums"]["contract_status"] | null
+          id?: string
+          reason?: string | null
+          to_status?: Database["public"]["Enums"]["contract_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_status_history_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contract_status_transitions: {
+        Row: {
+          allowed_roles: Database["public"]["Enums"]["app_role"][]
+          from_status: Database["public"]["Enums"]["contract_status"]
+          to_status: Database["public"]["Enums"]["contract_status"]
+        }
+        Insert: {
+          allowed_roles?: Database["public"]["Enums"]["app_role"][]
+          from_status: Database["public"]["Enums"]["contract_status"]
+          to_status: Database["public"]["Enums"]["contract_status"]
+        }
+        Update: {
+          allowed_roles?: Database["public"]["Enums"]["app_role"][]
+          from_status?: Database["public"]["Enums"]["contract_status"]
+          to_status?: Database["public"]["Enums"]["contract_status"]
+        }
+        Relationships: []
       }
       notifications: {
         Row: {
@@ -443,6 +573,7 @@ export type Database = {
       profiles: {
         Row: {
           bank_id: string | null
+          created_at: string
           full_name: string | null
           id: string
           role: Database["public"]["Enums"]["app_role"]
@@ -450,6 +581,7 @@ export type Database = {
         }
         Insert: {
           bank_id?: string | null
+          created_at?: string
           full_name?: string | null
           id: string
           role?: Database["public"]["Enums"]["app_role"]
@@ -457,6 +589,7 @@ export type Database = {
         }
         Update: {
           bank_id?: string | null
+          created_at?: string
           full_name?: string | null
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
@@ -613,6 +746,21 @@ export type Database = {
         | "manager"
         | "validator"
         | "auditor"
+      contract_status:
+        | "draft"
+        | "pending_documents"
+        | "in_review"
+        | "approved"
+        | "pending_signature_b"
+        | "pending_signature_c"
+        | "pending_mortgage_registration"
+        | "pending_insurance"
+        | "active"
+        | "alert"
+        | "client_refused"
+        | "cancelled"
+        | "expired"
+        | "renewed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -735,6 +883,22 @@ export const Constants = {
         "manager",
         "validator",
         "auditor",
+      ],
+      contract_status: [
+        "draft",
+        "pending_documents",
+        "in_review",
+        "approved",
+        "pending_signature_b",
+        "pending_signature_c",
+        "pending_mortgage_registration",
+        "pending_insurance",
+        "active",
+        "alert",
+        "client_refused",
+        "cancelled",
+        "expired",
+        "renewed",
       ],
     },
   },

@@ -1,33 +1,63 @@
-
-import React from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+// ============================================================================
+// Liste des contrats + fiche de détail (R2 / R3.1)
+// ----------------------------------------------------------------------------
+// • Une seule source de données (`contracts`, filtrée par la RLS : banque de
+//   l'utilisateur et `deleted_at IS NULL`).
+// • Les mises à jour passent par la base : le trigger
+//   `enforce_contract_status_transition` refuse toute transition hors matrice et
+//   renvoie un message en français, affiché tel quel à l'utilisateur.
+// • La suppression est **logique** (`deleted_at`) : aucune perte définitive,
+//   piste d'audit conservée, restauration possible par un administrateur.
+// ============================================================================
+import React, { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import ContractTable from "./ContractTable";
-import { Tables, TablesUpdate } from "@/integrations/supabase/types";
-import { logAction } from "@/lib/audit-log";
+import ContractDetailDialog from "./ContractDetailDialog";
+import type { Tables, TablesUpdate } from "@/integrations/supabase/types";
+import { AUDIT_ACTIONS, logAction } from "@/lib/audit-log";
+import { downloadContractFile } from "@/lib/storage";
 
-const fetchContracts = async () => {
-  let { data, error } = await supabase
+type Contract = Tables<"contracts">;
+
+const CONTRACTS_QUERY_KEY = ["contracts"] as const;
+
+const fetchContracts = async (): Promise<Contract[]> => {
+  const { data, error } = await supabase
     .from("contracts")
     .select("*")
     .order("created_at", { ascending: false });
+
   if (error) throw error;
-  return data || [];
+  return data ?? [];
 };
 
 const ContractList: React.FC = () => {
   const queryClient = useQueryClient();
+  const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
+  const [contractToDelete, setContractToDelete] = useState<Contract | null>(null);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
-  const { data: contracts, isLoading } = useQuery<Tables<'contracts'>[]>({
-    queryKey: ["contracts"],
+  const { data: contracts, isLoading } = useQuery<Contract[]>({
+    queryKey: CONTRACTS_QUERY_KEY,
     queryFn: fetchContracts,
   });
 
   const updateContractMutation = useMutation<
     void,
     Error,
-    { contractId: string; updates: Partial<TablesUpdate<'contracts'>> }
+    { contractId: string; updates: Partial<TablesUpdate<"contracts">> }
   >({
     mutationFn: async ({ contractId, updates }) => {
       const { error } = await supabase
@@ -37,67 +67,139 @@ const ContractList: React.FC = () => {
       if (error) throw error;
     },
     onSuccess: (_, { contractId, updates }) => {
-      queryClient.invalidateQueries({ queryKey: ["contracts"] });
+      queryClient.invalidateQueries({ queryKey: CONTRACTS_QUERY_KEY });
       toast({
-        title: "Succès",
-        description: "Contrat mis à jour.",
+        title: "Contrat mis à jour",
+        description: updates.statut
+          ? "Le changement de statut est enregistré dans l'historique."
+          : undefined,
       });
-      logAction("contract.update", { contractId, changes: updates });
+      void logAction(AUDIT_ACTIONS.contractUpdate, { contractId, fields: Object.keys(updates) });
     },
-    onError: (error: any) => {
+    onError: (error) => {
+      // Messages Postgres lisibles : transition interdite, rôle insuffisant,
+      // contrainte d'intégrité (montant, dates, devise)…
       toast({
-        title: "Erreur",
-        description: error?.message || "Impossible de mettre à jour le contrat.",
+        title: "Modification refusée",
+        description: error.message || "Impossible de mettre à jour le contrat.",
+        variant: "destructive",
       });
     },
   });
 
-  const deleteContractMutation = useMutation<
-    void,
-    Error,
-    { contractId: string }
-  >({
-    mutationFn: async ({ contractId }) => {
+  const archiveContractMutation = useMutation<void, Error, { contract: Contract }>({
+    mutationFn: async ({ contract }) => {
       const { error } = await supabase
         .from("contracts")
-        .delete()
-        .eq("id", contractId);
+        .update({ deleted_at: new Date().toISOString() })
+        .eq("id", contract.id);
       if (error) throw error;
     },
-    onSuccess: (_, { contractId }) => {
-      queryClient.invalidateQueries({ queryKey: ["contracts"] });
+    onSuccess: (_, { contract }) => {
+      queryClient.invalidateQueries({ queryKey: CONTRACTS_QUERY_KEY });
+      setContractToDelete(null);
       toast({
-        title: "Succès",
-        description: "Contrat supprimé avec succès.",
+        title: "Contrat archivé",
+        description: `${contract.reference_decision || contract.client} n'apparaît plus dans la liste. Un administrateur peut le restaurer.`,
       });
-      logAction("contract.delete", { contractId });
+      void logAction(AUDIT_ACTIONS.contractDelete, {
+        contractId: contract.id,
+        reference: contract.reference_decision,
+        mode: "soft",
+      });
     },
-    onError: (error: any) => {
+    onError: (error) => {
+      setContractToDelete(null);
       toast({
-        title: "Erreur",
-        description: error?.message || "Impossible de supprimer le contrat.",
+        title: "Archivage refusé",
+        description: error.message || "Impossible d'archiver ce contrat.",
+        variant: "destructive",
       });
     },
   });
 
-  const handleContractUpdate = async (contractId: string, updates: Partial<TablesUpdate<'contracts'>>) => {
+  const handleSaveChanges = async (
+    contractId: string,
+    updates: Partial<TablesUpdate<"contracts">>,
+  ) => {
     await updateContractMutation.mutateAsync({ contractId, updates });
   };
 
-  const handleContractDelete = async (contractId: string) => {
-    await deleteContractMutation.mutateAsync({ contractId });
-  };
+  const handleDownload = async (contract: Contract) => {
+    if (!contract.file_path) {
+      toast({
+        title: "Aucun document",
+        description: "Ce contrat n'a pas de fichier associé.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-  const handleContractUpdated = () => {
-    queryClient.invalidateQueries({ queryKey: ["contracts"] });
+    setDownloadingId(contract.id);
+    try {
+      await downloadContractFile(contract.file_path, contract.reference_decision || undefined);
+      await logAction(AUDIT_ACTIONS.documentDownload, {
+        contractId: contract.id,
+        reference: contract.reference_decision,
+      });
+    } catch (error) {
+      toast({
+        title: "Téléchargement impossible",
+        description: error instanceof Error ? error.message : "Erreur inconnue.",
+        variant: "destructive",
+      });
+    } finally {
+      setDownloadingId(null);
+    }
   };
 
   return (
-    <ContractTable
-      contracts={contracts || []}
-      isLoading={isLoading}
-      onContractUpdate={handleContractUpdated}
-    />
+    <>
+      <ContractTable
+        contracts={contracts ?? []}
+        isLoading={isLoading}
+        onContractUpdate={() => queryClient.invalidateQueries({ queryKey: CONTRACTS_QUERY_KEY })}
+        onViewContract={setSelectedContract}
+        onDownloadContract={handleDownload}
+        isDownloadingId={downloadingId}
+        onDeleteContract={setContractToDelete}
+        isDeletingId={archiveContractMutation.isPending ? contractToDelete?.id ?? null : null}
+      />
+
+      {selectedContract && (
+        <ContractDetailDialog
+          open={Boolean(selectedContract)}
+          onOpenChange={(open) => {
+            if (!open) setSelectedContract(null);
+          }}
+          contract={selectedContract}
+          onSaveChanges={handleSaveChanges}
+          isSaving={updateContractMutation.isPending}
+        />
+      )}
+
+      <AlertDialog open={Boolean(contractToDelete)} onOpenChange={(open) => !open && setContractToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Archiver ce contrat ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {contractToDelete
+                ? `« ${contractToDelete.reference_decision || "sans référence"} — ${contractToDelete.client} » sera retiré de la liste. Aucune donnée n'est détruite : le document, l'historique de statuts et la piste d'audit sont conservés, et un administrateur peut restaurer le contrat.`
+                : ""}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => contractToDelete && archiveContractMutation.mutate({ contract: contractToDelete })}
+              className="bg-red-600 text-white hover:bg-red-700"
+            >
+              Archiver
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };
 
