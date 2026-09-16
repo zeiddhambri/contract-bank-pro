@@ -100,12 +100,28 @@ export async function uploadContractFile({
   return path;
 }
 
-/** Remplace le document d'un contrat (suppression de l'ancien puis envoi). */
-export async function replaceContractFile(
-  params: UploadContractFileParams & { previousPath: string | null },
-): Promise<string> {
+export interface ReplaceContractFileParams extends UploadContractFileParams {
+  previousPath: string | null;
+  /**
+   * Conserve l'ancien objet dans le bucket : indispensable pour l'historique
+   * documentaire (`contract_versions`), où chaque version reste téléchargeable.
+   * À `false`, l'ancien objet est supprimé (remplacement sans versionnage).
+   */
+  keepPrevious?: boolean;
+}
+
+/**
+ * Remplace le document d'un contrat.
+ * Par défaut l'ancien fichier est **conservé** et reste accessible en URL
+ * signée : un contrat bancaire ne perd pas une version signée.
+ */
+export async function replaceContractFile({
+  keepPrevious = true,
+  ...params
+}: ReplaceContractFileParams): Promise<string> {
   const path = await uploadContractFile(params);
-  if (params.previousPath && params.previousPath !== path) {
+
+  if (!keepPrevious && params.previousPath && params.previousPath !== path) {
     // Un échec de suppression ne doit pas bloquer le remplacement.
     const { error } = await supabase.storage
       .from(CONTRACT_FILES_BUCKET)
@@ -114,6 +130,7 @@ export async function replaceContractFile(
       console.warn('Ancien document non supprimé :', error.message);
     }
   }
+
   return path;
 }
 

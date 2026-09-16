@@ -8,7 +8,6 @@
 // absent.
 // ============================================================================
 import React from "react";
-import { useQuery } from "@tanstack/react-query";
 import {
   Bar,
   BarChart,
@@ -24,7 +23,7 @@ import {
 } from "recharts";
 import { AlertTriangle, CheckCircle, Clock, FileText, Wallet } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { supabase } from "@/integrations/supabase/client";
+import { useAllContracts } from "@/hooks/useContracts";
 import { formatCurrency, formatCurrencyTotals, formatPct } from "@/lib/contract-helpers";
 import {
   createdThisMonth,
@@ -37,14 +36,8 @@ import {
 } from "@/lib/contract-metrics";
 
 const DashboardStats = () => {
-  const { data: contracts, isLoading } = useQuery<Contract[]>({
-    queryKey: ["dashboard-stats"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("contracts").select("*");
-      if (error) throw error;
-      return data ?? [];
-    },
-  });
+  // Même source que le Kanban et la liste : ['contracts','all'], une requête.
+  const { data: contracts, isLoading } = useAllContracts();
 
   if (isLoading) {
     return (

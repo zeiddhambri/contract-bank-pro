@@ -10,6 +10,7 @@ import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import ClauseManager from "./pages/ClauseManager";
+import ContractDetail from "./pages/ContractDetail";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -86,6 +87,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <ClauseManager />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/contrats/:id"
+                element={
+                  <ProtectedRoute>
+                    <ContractDetail />
                   </ProtectedRoute>
                 }
               />

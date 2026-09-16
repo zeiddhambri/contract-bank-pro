@@ -372,6 +372,51 @@ export type Database = {
           },
         ]
       }
+      contract_comments: {
+        Row: {
+          comment: string
+          contract_id: string | null
+          created_at: string | null
+          id: string
+          tagged_users: string[] | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          comment: string
+          contract_id?: string | null
+          created_at?: string | null
+          id?: string
+          tagged_users?: string[] | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          comment?: string
+          contract_id?: string | null
+          created_at?: string | null
+          id?: string
+          tagged_users?: string[] | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_comments_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contract_comments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contract_reminders: {
         Row: {
           contract_id: string | null
@@ -468,6 +513,44 @@ export type Database = {
           to_status?: Database["public"]["Enums"]["contract_status"]
         }
         Relationships: []
+      }
+      contract_versions: {
+        Row: {
+          changes_description: string | null
+          contract_id: string | null
+          created_at: string | null
+          file_path: string
+          id: string
+          uploaded_by: string | null
+          version_number: number
+        }
+        Insert: {
+          changes_description?: string | null
+          contract_id?: string | null
+          created_at?: string | null
+          file_path: string
+          id?: string
+          uploaded_by?: string | null
+          version_number?: number
+        }
+        Update: {
+          changes_description?: string | null
+          contract_id?: string | null
+          created_at?: string | null
+          file_path?: string
+          id?: string
+          uploaded_by?: string | null
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_versions_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notifications: {
         Row: {

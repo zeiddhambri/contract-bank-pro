@@ -10,8 +10,7 @@
 // préférences de banque (R16), branchés.
 // ============================================================================
 import React, { useMemo, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNotifications } from "@/hooks/useNotifications";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,6 +27,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { useAllContracts } from "@/hooks/useContracts";
 import ContractList from "@/components/ContractList";
 import DashboardStats from "@/components/DashboardStats";
 import NotificationCenter from "@/components/NotificationCenter";
@@ -42,7 +42,7 @@ import { formatCurrency } from "@/lib/contract-helpers";
 type Contract = Tables<"contracts">;
 type View = "overview" | "contracts" | "kanban" | "financials";
 
-const CONTRACTS_QUERY_KEY = ["contracts"] as const;
+
 
 /** Fenêtre de surveillance des échéances, en jours. */
 const DEADLINE_WINDOW_DAYS = 90;
@@ -60,23 +60,17 @@ const Dashboard = () => {
   const [activeView, setActiveView] = useState<View>("overview");
   const [showNotifications, setShowNotifications] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  /** Recherche globale : partagée avec la liste des contrats (une seule source). */
+  const [searchTerm, setSearchTerm] = useState("");
 
   const { unreadCount } = useNotifications();
 
   // Même clé de cache que ContractList et le Kanban : une création ou un
   // changement de statut rafraîchit les trois vues.
-  const { data: contracts } = useQuery<Contract[]>({
-    queryKey: CONTRACTS_QUERY_KEY,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("contracts")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      return data ?? [];
-    },
-  });
+  // Le Kanban, les cartes de synthèse et les agrégats financiers partagent
+  // cette requête unique (clé ['contracts','all']) ; la liste paginée utilise
+  // ['contracts','list', …] et toutes sont invalidées par le préfixe.
+  const { data: contracts } = useAllContracts();
 
   const rows = useMemo(() => contracts ?? [], [contracts]);
 
@@ -249,7 +243,7 @@ const Dashboard = () => {
       case "overview":
         return renderOverview();
       case "contracts":
-        return <ContractList />;
+        return <ContractList search={searchTerm} onSearchChange={setSearchTerm} />;
       case "kanban":
         return <ContractKanban />;
       case "financials":
@@ -274,7 +268,16 @@ const Dashboard = () => {
             </div>
 
             <div className="flex items-center gap-4">
-              <SearchBar />
+              <SearchBar
+                value={searchTerm}
+                onValueChange={(value) => {
+                  setSearchTerm(value);
+                  // Toute saisie bascule sur la liste : la recherche agit là où
+                  // elle est visible, pas sur une vue qui ne l'affiche pas.
+                  if (value.trim().length > 0) setActiveView("contracts");
+                }}
+                onSubmit={() => setActiveView("contracts")}
+              />
 
               <div className="relative">
                 <Button
@@ -358,7 +361,8 @@ const Dashboard = () => {
         open={isCreateOpen}
         onOpenChange={setIsCreateOpen}
         onContractCreated={() => {
-          queryClient.invalidateQueries({ queryKey: CONTRACTS_QUERY_KEY });
+          // Préfixe : rafraîchit la liste paginée, le Kanban et les agrégats.
+          queryClient.invalidateQueries({ queryKey: ["contracts"] });
           setActiveView("contracts");
         }}
       />

@@ -10,7 +10,6 @@
 //     répartition « Payé / En attente / En retard » étaient codées en dur).
 // ============================================================================
 import React from "react";
-import { useQuery } from "@tanstack/react-query";
 import {
   Bar,
   BarChart,
@@ -28,7 +27,7 @@ import {
 } from "recharts";
 import { AlertTriangle, BadgeDollarSign, Hourglass, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { supabase } from "@/integrations/supabase/client";
+import { useAllContracts } from "@/hooks/useContracts";
 import {
   formatCurrency,
   formatCurrencyTotals,
@@ -57,14 +56,8 @@ const PHASE_LABELS = {
 } as const;
 
 const FinancialDashboard = () => {
-  const { data: contracts, isLoading } = useQuery<Contract[]>({
-    queryKey: ["financial-data"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("contracts").select("*");
-      if (error) throw error;
-      return data ?? [];
-    },
-  });
+  // Portefeuille complet partagé (clé ['contracts','all']).
+  const { data: contracts, isLoading } = useAllContracts();
 
   if (isLoading) {
     return (

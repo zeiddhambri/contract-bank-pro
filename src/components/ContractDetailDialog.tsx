@@ -29,7 +29,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import ContractDetailForm from "./ContractDetailForm";
 import ContractFileUpload from "./ContractFileUpload";
 import ContractStatusReasonField from "./ContractStatusReasonField";
-import { downloadContractFile, replaceContractFile } from "@/lib/storage";
+import { downloadContractFile } from "@/lib/storage";
+import { useReplaceDocument, useUploadDocument } from "@/hooks/useContractMutations";
 import { AUDIT_ACTIONS, logAction } from "@/lib/audit-log";
 import {
   allowedTransitions,
@@ -61,6 +62,8 @@ const ContractDetailDialog: React.FC<ContractDetailDialogProps> = ({
   isSaving,
 }) => {
   const { userProfile } = useAuth();
+  const replaceDocument = useReplaceDocument();
+  const uploadDocument = useUploadDocument();
   const [editedContract, setEditedContract] = useState<Tables<"contracts">>(contract);
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -154,6 +157,7 @@ const ContractDetailDialog: React.FC<ContractDetailDialogProps> = ({
 
   const changedFields = getChangedFields();
   const hasChanges = Object.keys(changedFields).length > 0 || Boolean(file);
+  const hasFieldChanges = Object.keys(changedFields).length > 0;
 
   const handleSave = async () => {
     if (!hasChanges || isUploading) return;
@@ -189,47 +193,29 @@ const ContractDetailDialog: React.FC<ContractDetailDialogProps> = ({
       return;
     }
 
+    // Document : les hooks archivent la version précédente, mettent à jour
+    // `file_path` et journalisent l'opération (mêmes règles sur la fiche page).
     if (file) {
-      if (!contract.bank_id) {
-        toast({
-          title: "Banque inconnue",
-          description: "Ce contrat n'est rattaché à aucune banque : téléversement impossible.",
-          variant: "destructive",
-        });
-        return;
-      }
-
       setIsUploading(true);
       try {
-        const newFilePath = await replaceContractFile({
-          bankId: contract.bank_id,
-          contractId: contract.id,
-          file,
-          previousPath: contract.file_path,
-        });
-
-        updates.file_path = newFilePath;
-
-        await logAction(AUDIT_ACTIONS.documentReplace, {
-          contractId: contract.id,
-          reference: contract.reference_decision,
-          fileName: file.name,
-        });
-      } catch (error) {
-        toast({
-          title: "Erreur de téléversement",
-          description: error instanceof Error ? error.message : "Téléversement impossible.",
-          variant: "destructive",
-        });
+        if (contract.file_path) {
+          await replaceDocument.mutateAsync({
+            contract,
+            file,
+            description: statusReason.trim() || undefined,
+          });
+        } else {
+          await uploadDocument.mutateAsync({ contract, file });
+        }
+      } catch {
+        // Message déjà affiché par le hook.
         setIsUploading(false);
         return;
       }
       setIsUploading(false);
     }
 
-    if (Object.keys(updates).length > 0) {
-      // La journalisation `contract.update` est faite par l'appelant
-      // (ContractList), au plus près de l'écriture réussie en base.
+    if (hasFieldChanges) {
       await onSaveChanges(contract.id, updates);
     }
 
@@ -348,8 +334,18 @@ const ContractDetailDialog: React.FC<ContractDetailDialogProps> = ({
             Fermer
           </Button>
           <div className="flex-1" />
-          <Button onClick={handleSave} disabled={isSaving || !hasChanges || isUploading}>
-            {isUploading ? "Téléversement…" : isSaving ? "Enregistrement…" : "Enregistrer"}
+          <Button
+            onClick={handleSave}
+            disabled={
+              isSaving || !hasChanges || isUploading ||
+              replaceDocument.isPending || uploadDocument.isPending
+            }
+          >
+            {isUploading || replaceDocument.isPending || uploadDocument.isPending
+              ? "Téléversement…"
+              : isSaving
+                ? "Enregistrement…"
+                : "Enregistrer"}
           </Button>
         </DialogFooter>
       </DialogContent>

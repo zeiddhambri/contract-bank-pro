@@ -14,7 +14,7 @@
 //     chaque carte (WCAG 2.5.7).
 // ============================================================================
 import React, { useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
@@ -33,7 +33,7 @@ import {
 import { ArrowRightLeft, Calendar, GripVertical } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import type { Tables } from "@/integrations/supabase/types";
+import { CONTRACTS_ALL_KEY, useAllContracts, type Contract } from "@/hooks/useContracts";
 import {
   KANBAN_COLUMNS,
   allowedTransitions,
@@ -45,10 +45,6 @@ import {
   type ContractStatus,
 } from "@/lib/contract-status";
 import { formatCurrency, getTypeLabel } from "@/lib/contract-helpers";
-
-type Contract = Tables<"contracts">;
-
-const CONTRACTS_QUERY_KEY = ["contracts"] as const;
 
 const COLUMN_TONES: Record<string, string> = {
   instruction: "bg-slate-100",
@@ -64,18 +60,9 @@ const ContractKanban = () => {
   const [draggedContract, setDraggedContract] = useState<Contract | null>(null);
   const [dropTarget, setDropTarget] = useState<ContractStatus | null>(null);
 
-  const { data: contracts, isLoading } = useQuery<Contract[]>({
-    queryKey: CONTRACTS_QUERY_KEY,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("contracts")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      return data ?? [];
-    },
-  });
+  // Portefeuille complet partagé avec le tableau de bord et les agrégats :
+  // une seule requête pour toutes ces surfaces (clé ['contracts','all']).
+  const { data: contracts, isLoading } = useAllContracts();
 
   const moveContract = useMutation<
     void,
@@ -99,10 +86,10 @@ const ContractKanban = () => {
 
     // Mise à jour optimiste : le plateau reflète le déplacement immédiatement.
     onMutate: async ({ contract, to }) => {
-      await queryClient.cancelQueries({ queryKey: CONTRACTS_QUERY_KEY });
-      const previous = queryClient.getQueryData<Contract[]>(CONTRACTS_QUERY_KEY);
+      await queryClient.cancelQueries({ queryKey: CONTRACTS_ALL_KEY });
+      const previous = queryClient.getQueryData<Contract[]>(CONTRACTS_ALL_KEY);
 
-      queryClient.setQueryData<Contract[]>(CONTRACTS_QUERY_KEY, (rows) =>
+      queryClient.setQueryData<Contract[]>(CONTRACTS_ALL_KEY, (rows) =>
         (rows ?? []).map((row) => (row.id === contract.id ? { ...row, statut: to } : row)),
       );
 
@@ -111,7 +98,7 @@ const ContractKanban = () => {
 
     onError: (error, _variables, context) => {
       if (context?.previous) {
-        queryClient.setQueryData(CONTRACTS_QUERY_KEY, context.previous);
+        queryClient.setQueryData(CONTRACTS_ALL_KEY, context.previous);
       }
       toast({
         title: "Déplacement refusé",
@@ -128,7 +115,7 @@ const ContractKanban = () => {
     },
 
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: CONTRACTS_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: CONTRACTS_ALL_KEY });
     },
   });
 
