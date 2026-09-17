@@ -11,11 +11,16 @@ import { AlertTriangle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
-interface QueryErrorStateProps {
+export interface QueryErrorStateProps {
   /** Titre court, adapté au contexte (« Contrats indisponibles »…). */
   title?: string;
   /** Message technique restitué tel quel (PostgREST, RLS, réseau). */
   message?: string | null;
+  /**
+   * Conseil d'exploitation affiché sous le message (migration à appliquer,
+   * droit manquant…). Réservé aux causes que l'utilisateur peut corriger.
+   */
+  hint?: string | null;
   onRetry?: () => void;
   isRetrying?: boolean;
   /** Variante compacte (carte de tableau de bord plutôt que pleine page). */
@@ -25,6 +30,7 @@ interface QueryErrorStateProps {
 const QueryErrorState: React.FC<QueryErrorStateProps> = ({
   title = "Données indisponibles",
   message,
+  hint,
   onRetry,
   isRetrying = false,
   compact = false,
@@ -44,6 +50,7 @@ const QueryErrorState: React.FC<QueryErrorStateProps> = ({
             {message ||
               "La connexion au serveur a échoué. Vos données n'ont pas été modifiées."}
           </p>
+          {hint && <p className="mt-1 text-xs text-slate-500">{hint}</p>}
         </div>
         {onRetry && (
           <Button

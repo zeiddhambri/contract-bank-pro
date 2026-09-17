@@ -5,11 +5,9 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
-import Index from "./pages/Index";
 import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
-import ClauseManager from "./pages/ClauseManager";
 import ContractDetail from "./pages/ContractDetail";
 import NotFound from "./pages/NotFound";
 
@@ -82,14 +80,10 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-              <Route
-                path="/clauses"
-                element={
-                  <ProtectedRoute>
-                    <ClauseManager />
-                  </ProtectedRoute>
-                }
-              />
+              {/* La bibliothèque de clauses et les écrans d'administration
+                  vivent dans le tableau de bord : une seule coquille (R6.1).
+                  Les anciennes URLs redirigent au lieu de retourner un 404. */}
+              <Route path="/clauses" element={<Navigate to="/dashboard" replace />} />
               <Route
                 path="/contrats/:id"
                 element={
@@ -98,14 +92,7 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-              <Route
-                path="/legacy"
-                element={
-                  <ProtectedRoute>
-                    <Index />
-                  </ProtectedRoute>
-                }
-              />
+              <Route path="/legacy" element={<Navigate to="/dashboard" replace />} />
               
               {/* 404 page */}
               <Route path="*" element={<NotFound />} />

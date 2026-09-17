@@ -16,14 +16,22 @@ import { useNotifications } from "@/hooks/useNotifications";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import type { LucideIcon } from "lucide-react";
 import {
   AlertTriangle,
   BarChart3,
   Bell,
   Calendar,
   FileText,
+  Layers,
+  Library,
+  Palette,
   Plus,
+  ShieldCheck,
+  Sparkles,
   TrendingUp,
+  Users,
+  Wand2,
 } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -35,12 +43,49 @@ import SearchBar from "@/components/SearchBar";
 import ContractKanban from "@/components/ContractKanban";
 import FinancialDashboard from "@/components/FinancialDashboard";
 import CreateContractDialog from "@/components/CreateContractDialog";
+import ClauseLibrary from "@/components/ClauseLibrary";
+import ContractTemplateManager from "@/components/ContractTemplateManager";
+import UserManagementPanel from "@/components/UserManagementPanel";
+import AuditLogPanel from "@/components/AuditLogPanel";
+import OrganizationBrandingManager from "@/components/OrganizationBrandingManager";
+import AiAssistantSheet from "@/components/AiAssistantSheet";
+import AiContractGenerator from "@/components/AiContractGenerator";
+import Logo from "@/components/Logo";
+import BankLogo from "@/components/BankLogo";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 import type { Tables } from "@/integrations/supabase/types";
 import { getStatusBadgeClassLight, getStatusLabel, normalizeStatus } from "@/lib/contract-status";
 import { formatCurrency } from "@/lib/contract-helpers";
 
 type Contract = Tables<"contracts">;
-type View = "overview" | "contracts" | "kanban" | "financials";
+
+/**
+ * Une seule coquille applicative (R6.1) : les écrans qui n'étaient atteignables
+ * que par la route orpheline `/legacy` (bibliothèque de clauses, modèles,
+ * utilisateurs, piste d'audit, marque, IA) deviennent des vues du tableau de
+ * bord, avec leurs droits d'accès.
+ */
+type View =
+  | "overview"
+  | "contracts"
+  | "kanban"
+  | "financials"
+  | "clauses"
+  | "templates"
+  | "users"
+  | "audit"
+  | "branding";
+
+interface NavItem {
+  key: View;
+  label: string;
+  icon: LucideIcon;
+}
+
+interface NavSection {
+  label: string;
+  items: NavItem[];
+}
 
 
 
@@ -55,11 +100,16 @@ interface Deadline {
 }
 
 const Dashboard = () => {
-  const { userProfile, bank, signOut } = useAuth();
+  const { userProfile, userRole, bank, signOut } = useAuth();
   const queryClient = useQueryClient();
   const [activeView, setActiveView] = useState<View>("overview");
   const [showNotifications, setShowNotifications] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [aiAssistantOpen, setAiAssistantOpen] = useState(false);
+  const [aiGeneratorOpen, setAiGeneratorOpen] = useState(false);
+
+  /** Administration : super_admin (toutes banques) ou bank_admin (sa banque). */
+  const canAdminister = userRole === "super_admin" || userRole === "bank_admin";
   /** Recherche globale : partagée avec la liste des contrats (une seule source). */
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -109,12 +159,37 @@ const Dashboard = () => {
     return candidates.sort((a, b) => a.daysLeft - b.daysLeft).slice(0, 5);
   }, [rows]);
 
-  const navigationItems = [
-    { key: "overview", label: "Vue d'ensemble", icon: BarChart3 },
-    { key: "contracts", label: "Contrats", icon: FileText },
-    { key: "kanban", label: "Cycle de vie", icon: Calendar },
-    { key: "financials", label: "Finances", icon: TrendingUp },
-  ] as const;
+  const navigationSections: NavSection[] = [
+    {
+      label: "Pilotage",
+      items: [
+        { key: "overview", label: "Vue d'ensemble", icon: BarChart3 },
+        { key: "contracts", label: "Contrats", icon: FileText },
+        { key: "kanban", label: "Cycle de vie", icon: Calendar },
+        { key: "financials", label: "Finances", icon: TrendingUp },
+      ],
+    },
+    {
+      label: "Référentiels",
+      items: [
+        { key: "clauses", label: "Bibliothèque de clauses", icon: Library },
+        { key: "templates", label: "Modèles de contrat", icon: Layers },
+      ],
+    },
+    // Écrans d'administration : invisibles sans le rôle correspondant.
+    ...(canAdminister
+      ? [
+          {
+            label: "Administration",
+            items: [
+              { key: "users", label: "Utilisateurs", icon: Users },
+              { key: "audit", label: "Piste d'audit", icon: ShieldCheck },
+              { key: "branding", label: "Marque & thème", icon: Palette },
+            ] as NavItem[],
+          },
+        ]
+      : []),
+  ];
 
   const renderOverview = () => (
     <div className="space-y-6">
@@ -238,6 +313,18 @@ const Dashboard = () => {
     </div>
   );
 
+  const renderForbidden = () => (
+    <Card>
+      <CardContent className="p-8 text-center">
+        <ShieldCheck className="mx-auto h-8 w-8 text-gray-300" aria-hidden="true" />
+        <p className="mt-2 font-semibold text-gray-900">Accès restreint</p>
+        <p className="mt-1 text-sm text-gray-500">
+          Cet écran est réservé aux administrateurs de la banque.
+        </p>
+      </CardContent>
+    </Card>
+  );
+
   const renderContent = () => {
     switch (activeView) {
       case "overview":
@@ -248,6 +335,16 @@ const Dashboard = () => {
         return <ContractKanban />;
       case "financials":
         return <FinancialDashboard />;
+      case "clauses":
+        return <ClauseLibrary />;
+      case "templates":
+        return <ContractTemplateManager />;
+      case "users":
+        return canAdminister ? <UserManagementPanel /> : renderForbidden();
+      case "audit":
+        return canAdminister ? <AuditLogPanel /> : renderForbidden();
+      case "branding":
+        return canAdminister ? <OrganizationBrandingManager /> : renderForbidden();
       default:
         return null;
     }
@@ -258,12 +355,14 @@ const Dashboard = () => {
       <header className="border-b bg-white shadow-sm">
         <div className="px-6 py-4">
           <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
+              <Logo />
               <h1 className="text-2xl font-bold text-gray-900">JURIX</h1>
               {bank && (
-                <Badge variant="outline" className="border-blue-200 text-blue-600">
-                  {bank.name}
-                </Badge>
+                <span className="flex items-center gap-2 rounded-full border border-blue-200 py-1 pl-1 pr-3">
+                  <BankLogo logoUrl={bank.logo_url} bankName={bank.name} />
+                  <span className="text-sm font-medium text-blue-700">{bank.name}</span>
+                </span>
               )}
             </div>
 
@@ -278,6 +377,26 @@ const Dashboard = () => {
                 }}
                 onSubmit={() => setActiveView("contracts")}
               />
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setAiAssistantOpen(true)}
+                title="Poser une question à l'assistant"
+              >
+                <Sparkles className="mr-2 h-4 w-4" aria-hidden="true" />
+                Assistant IA
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setAiGeneratorOpen(true)}
+                title="Générer un brouillon de contrat"
+              >
+                <Wand2 className="mr-2 h-4 w-4" aria-hidden="true" />
+                Générer
+              </Button>
+              <LanguageSwitcher />
 
               <div className="relative">
                 <Button
@@ -318,28 +437,37 @@ const Dashboard = () => {
       <div className="flex">
         <aside className="min-h-screen w-64 bg-white shadow-sm">
           <nav className="p-4" aria-label="Navigation principale">
-            <div className="space-y-2">
-              {navigationItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = activeView === item.key;
+            <div className="space-y-6">
+              {navigationSections.map((section) => (
+                <div key={section.label}>
+                  <p className="px-3 pb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+                    {section.label}
+                  </p>
+                  <div className="space-y-1">
+                    {section.items.map((item) => {
+                      const Icon = item.icon;
+                      const isActive = activeView === item.key;
 
-                return (
-                  <button
-                    key={item.key}
-                    type="button"
-                    onClick={() => setActiveView(item.key)}
-                    aria-current={isActive ? "page" : undefined}
-                    className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors ${
-                      isActive
-                        ? "border border-blue-200 bg-blue-50 text-blue-700"
-                        : "text-gray-600 hover:bg-gray-50"
-                    }`}
-                  >
-                    <Icon className="h-5 w-5" aria-hidden="true" />
-                    <span>{item.label}</span>
-                  </button>
-                );
-              })}
+                      return (
+                        <button
+                          key={item.key}
+                          type="button"
+                          onClick={() => setActiveView(item.key)}
+                          aria-current={isActive ? "page" : undefined}
+                          className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
+                            isActive
+                              ? "border border-blue-200 bg-blue-50 font-medium text-blue-700"
+                              : "border border-transparent text-gray-600 hover:bg-gray-50"
+                          }`}
+                        >
+                          <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
+                          <span>{item.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
             </div>
 
             <div className="mt-8">
@@ -356,6 +484,16 @@ const Dashboard = () => {
 
         <main className="flex-1 p-6">{renderContent()}</main>
       </div>
+
+      <AiAssistantSheet open={aiAssistantOpen} onOpenChange={setAiAssistantOpen} />
+      <AiContractGenerator
+        open={aiGeneratorOpen}
+        onOpenChange={setAiGeneratorOpen}
+        onContractGenerated={() => {
+          queryClient.invalidateQueries({ queryKey: ["contracts"] });
+          setActiveView("contracts");
+        }}
+      />
 
       <CreateContractDialog
         open={isCreateOpen}

@@ -22,6 +22,15 @@ import {
 import CreateTemplateDialog from './CreateTemplateDialog';
 import EditTemplateDialog from './EditTemplateDialog';
 
+/**
+ * Lignes renvoyées par la requête : le `select` embarque les champs et les
+ * étapes du modèle. Typé ici plutôt que casté en `any` à chaque lecture.
+ */
+type TemplateWithRelations = Tables<'contract_templates'> & {
+  template_fields?: Tables<'template_fields'>[] | null;
+  template_workflow_steps?: Tables<'template_workflow_steps'>[] | null;
+};
+
 const fetchTemplates = async () => {
   const { data, error } = await supabase
     .from('contract_templates')
@@ -33,7 +42,7 @@ const fetchTemplates = async () => {
     .order('created_at', { ascending: false });
   
   if (error) throw error;
-  return data || [];
+  return (data || []) as TemplateWithRelations[];
 };
 
 const ContractTemplateManager = () => {
@@ -61,10 +70,10 @@ const ContractTemplateManager = () => {
         description: 'Modèle supprimé avec succès.',
       });
     },
-    onError: (error: any) => {
+    onError: (error) => {
       toast({
         title: 'Erreur',
-        description: error?.message || 'Impossible de supprimer le modèle.',
+        description: error.message || 'Impossible de supprimer le modèle.',
         variant: 'destructive',
       });
     },
@@ -85,10 +94,10 @@ const ContractTemplateManager = () => {
         description: 'Statut du modèle mis à jour.',
       });
     },
-    onError: (error: any) => {
+    onError: (error) => {
       toast({
         title: 'Erreur',
-        description: error?.message || 'Impossible de mettre à jour le modèle.',
+        description: error.message || 'Impossible de mettre à jour le modèle.',
         variant: 'destructive',
       });
     },
@@ -184,11 +193,11 @@ const ContractTemplateManager = () => {
                 </div>
                 <div className="flex justify-between">
                   <span>Champs:</span>
-                  <span className="font-medium">{(template as any).template_fields?.length || 0}</span>
+                  <span className="font-medium">{template.template_fields?.length || 0}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Étapes:</span>
-                  <span className="font-medium">{(template as any).template_workflow_steps?.length || 0}</span>
+                  <span className="font-medium">{template.template_workflow_steps?.length || 0}</span>
                 </div>
               </div>
             </CardContent>

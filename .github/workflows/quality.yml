@@ -1,10 +1,12 @@
 # ============================================================================
 # Filet de qualité minimal (R5.1 / R5.2)
 # ----------------------------------------------------------------------------
-# Bloquant : type-check en mode strict et build de production.
-# Non bloquant (pour l'instant) : ESLint, qui remonte 24 erreurs héritées.
-# L'étape lint deviendra bloquante quand ce compteur sera à zéro — sinon une CI
-# rouge en permanence est ignorée, donc inutile.
+# Bloquant : type-check en mode strict, ESLint et build de production.
+# ESLint était informatif tant que la dette héritée (24 erreurs) rendait la CI
+# rouge en permanence ; cette dette est purgée (0 erreur au chantier R4), l'étape
+# redevient donc bloquante. Les 8 avertissements restants
+# (`react-refresh/only-export-components`) sont tolérés : les corriger impose de
+# scinder des fichiers qui exportent à la fois un composant et ses constantes.
 # ============================================================================
 name: quality
 
@@ -31,9 +33,8 @@ jobs:
       - name: Type-check (strict)
         run: npm run typecheck
 
-      - name: ESLint (informatif tant que la dette héritée n'est pas purgée)
-        continue-on-error: true
-        run: npx eslint . --format compact
+      - name: ESLint (bloquant)
+        run: npm run lint
 
       - name: Build de production
         run: npm run build

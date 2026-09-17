@@ -9,7 +9,7 @@ Ce dossier contient l'audit produit complet et le plan d'amélioration qui en d�
 
 ## Lecture en 60 secondes
 
-- **Le produit est coupé en deux** : l'application qui fonctionne (`/legacy`) n'est liée nulle part ; après connexion on arrive sur une maquette (`/dashboard`) dont les chiffres sont codés en dur.
+- **Le produit est coupé en deux** *(résolu par R2 + R4 + R6.1)* : l'application qui fonctionne (`/legacy`) n'est liée nulle part ; après connexion on arrive sur une maquette (`/dashboard`) dont les chiffres sont codés en dur.
 - **Le cœur métier n'est pas atteignable** *(résolu par R2 + R3)* : consulter, éditer, supprimer, télécharger un contrat ne fonctionne pas ; le Kanban ne persiste rien ; la recherche globale n'est pas branchée.
 - **La sécurité bloque toute vente à une banque** : politiques RLS `TO public` sur les contrats, bucket de documents public, escalade de rôle possible, piste d'audit falsifiable, Edge Functions IA sans authentification (dont une avec `service_role`).
 - **L'écart au marché est surtout un écart de câblage** : 7 tables et 5 écrans d'administration existent déjà pour les fonctionnalités manquantes (rappels, versions, commentaires, extractions IA avec score de confiance, workflow, intégrations).
@@ -29,11 +29,14 @@ Ce dossier contient l'audit produit complet et le plan d'amélioration qui en d�
 |---|---|---|---|
 | **R1** | Durcissement sécurité (RLS, storage privé, Functions authentifiées + quota, secrets, en-têtes) | ✅ **Implémenté** le 2026-09-16 — à déployer puis vérifier | `supabase/migrations/20260915120000-harden-security.sql`, `supabase/functions/_shared/guard.ts`, `src/lib/storage.ts`, `src/lib/audit-log.ts`, `public/_headers`, `.env.example` + runbook [`VERIFICATIONS-SECURITE.md`](./VERIFICATIONS-SECURITE.md) |
 | **R2** | Cycle de vie unique des contrats + intégrité des données (énuméré SQL, matrice de transitions, historique, devise, référence immuable, rappels idempotents) | ✅ **Implémenté** le 2026-09-16 — à déployer **après** R1 (conversion de données : staging d'abord) | `supabase/migrations/20260916090000-contract-lifecycle-integrity.sql`, `src/lib/contract-status.ts`, `src/lib/contract-metrics.ts` + guide [`MIGRATION-R2-CYCLE-DE-VIE.md`](./MIGRATION-R2-CYCLE-DE-VIE.md) |
-| **R5.1 / R5.2** | Filet de qualité : `strict` activé dans TypeScript + CI (type-check et build bloquants, ESLint informatif) | ✅ **Implémenté** le 2026-09-16 | `tsconfig.app.json`, `tsconfig.json`, `.github/workflows/quality.yml` |
+| **R5.1 / R5.2** | Filet de qualité : `strict` activé dans TypeScript + CI (type-check et build bloquants ; ESLint alors informatif, devenu bloquant au chantier R4) | ✅ **Implémenté** le 2026-09-16 | `tsconfig.app.json`, `tsconfig.json`, `.github/workflows/quality.yml` |
 | **R3** | Fiche contrat pleine page `/contrats/:id` (6 onglets), commentaires par banque, versions de documents, liste **paginée/recherchée/triée côté serveur**, états d'erreur explicites, requêtes du tableau de bord mutualisées | ✅ **Implémenté** le 2026-09-16 — à déployer **après** R1 et R2 | `supabase/migrations/20260916150000-contract-collaboration.sql`, `src/pages/ContractDetail.tsx`, `src/hooks/useContracts.ts`, `src/hooks/useContractDetail.ts`, `src/hooks/useContractMutations.ts`, `src/components/ContractTable.tsx`, `src/components/ContractList.tsx`, `src/components/QueryErrorState.tsx` + guide [`MIGRATION-R3-FICHE-CONTRAT.md`](./MIGRATION-R3-FICHE-CONTRAT.md) |
-| R4, R6 → R20 | Données fantômes restantes, routes unifiées, référentiel, échéances, IA, workflow, design system, accessibilité, i18n… | ⏳ À faire | `backlog-priorise.csv` |
+| **R4** | Zéro donnée fantôme : bibliothèque de clauses **persistée** (table `clauses`, RLS par banque, version et auteur imposés), fausse « amélioration IA » supprimée, panneau d'alertes fictif retiré, `ClauseManager` de démonstration remplacé | ✅ **Implémenté** le 2026-09-17 — à déployer après R1 | `supabase/migrations/20260917090000-clause-library.sql`, `src/lib/clause-library.ts`, `src/hooks/useClauses.ts`, `src/components/ClauseLibrary.tsx` + guide [`MIGRATION-R4-CLAUSES-ET-COQUILLE-UNIQUE.md`](./MIGRATION-R4-CLAUSES-ET-COQUILLE-UNIQUE.md) |
+| **R6.1 (partiel)** | Une seule coquille applicative : `/legacy` supprimé et redirigé, les écrans d'administration (utilisateurs, modèles, piste d'audit, marque) et l'IA deviennent des vues du tableau de bord avec droits par rôle | ✅ **Implémenté** le 2026-09-17 — routes `/app/*` et `/admin/*` restantes | `src/App.tsx`, `src/pages/Dashboard.tsx` (9 vues, navigation par sections) |
+| **R5.1 / R5.4** | CI : ESLint devenu **bloquant** (dette purgée : 0 erreur) ; code mort et composants orphelins supprimés (Index, AlertsPanel, ClauseManager/Editor/Sidebar, UserNav, AppLogo, `types/clause.ts`, `lib/ai-utils.ts`) | ✅ **Implémenté** le 2026-09-17 | `.github/workflows/quality.yml` |
+| R6.2 → R20 | Routes dédiées, palette ⌘K, référentiel, échéances, IA vérifiable, workflow, signature, design system, accessibilité, i18n, landing… | ⏳ À faire | `backlog-priorise.csv` |
 
-Effets mesurés des chantiers R1 + R2 (avant → après) :
+Effets mesurés des chantiers R1 → R4 (avant → après) :
 
 | Indicateur | Avant | Après |
 |---|---|---:|
@@ -62,12 +65,22 @@ Effets mesurés des chantiers R1 + R2 (avant → après) :
 | Erreur réseau ou refus RLS | « Aucun contrat disponible » (faux vide) | état d'erreur explicite avec bouton « Réessayer » |
 | Commentaires de contrat | table jamais câblée, aucune interface | onglet dédié : publication et suppression par l'auteur ou un administrateur, périmètre banque vérifié en base |
 | Versions de documents | remplacement sans historique, numéro de version saisi par le client | l'ancien fichier est archivé et reste téléchargeable ; numéro attribué par trigger + unicité `(contract_id, version_number)` ; écriture directe dans `contract_reminders` révoquée |
+| Bibliothèque de clauses | 3 clauses de démonstration codées en dur, faux chargement d'une seconde, créations perdues au rafraîchissement | table `public.clauses` : périmètre par banque, auteur et version imposés par trigger, unicité du titre, exports JSON/Markdown journalisés |
+| « Amélioration IA » d'une clause | simulation (attente de 2 s puis ajout de « fonctionnalité en développement » dans le texte) | supprimée : aucun bouton ne promet une capacité absente (l'assistant réel est le chantier R9) |
+| Panneau d'alertes | 4 alertes inventées (`CT-2024-004`, certificats et délais fictifs) | supprimé ; le tableau de bord affiche les contrats réellement en `alert` et les échéances/renouvellements/signatures à 90 jours |
+| Coquilles applicatives | 2 (`/dashboard` et `/legacy`, ce dernier seul accès aux écrans d'administration) | **1** : 9 vues dans le tableau de bord, `/legacy` et `/clauses` redirigent |
+| Écrans d'administration | atteignables uniquement par une route orpheline, sans contrôle d'accès à l'écran | vues « Utilisateurs », « Piste d'audit », « Marque & thème » réservées à `bank_admin`/`super_admin` (section masquée + rendu refusé) |
+| Identité produit | « JURIX », « CONTRACT MANAGER » et « Jurix.app » cohabitaient | JURIX dans toute l'app (en-tête, assistant IA, écran de marque) ; la landing reste à reprendre (R20.1) |
+| White-label | logo de banque jamais affiché | `banks.logo_url` rendu dans l'en-tête (`BankLogo`), repli neutre accessible |
+| Erreurs ESLint | 53 à l'audit, 24 après R1/R2, 17 en cours de R4 | **0** (8 avertissements `react-refresh` documentés) — l'étape lint de la CI est redevenue bloquante |
+| Code mort | 16 `console.log`, 6 composants orphelins, maquette `/legacy` de 215 lignes | 0 `console.log`, 0 composant orphelin, maquette supprimée |
+| Bundle JS (gzip) après R3/R4 | 372 kB | **371 kB** (bibliothèque de clauses ajoutée, ~1 500 lignes de maquette retirées) |
 ## Reproduction des mesures
 
 ```bash
 npm install
-npm run build                              # 1 287 kB (372 kB gzip) en un seul chunk
+npm run build                              # 1 275 kB (371 kB gzip) en un seul chunk
 npx tsc --noEmit -p tsconfig.app.json      # 21 erreurs
-npx eslint .                               # 53 erreurs, 8 warnings
+npx eslint .                               # 0 erreur, 8 warnings (react-refresh)
 grep -rn "console.log" src | wc -l         # 16
 ```

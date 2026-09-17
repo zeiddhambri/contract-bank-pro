@@ -99,10 +99,10 @@ const CreateTemplateDialog: React.FC<CreateTemplateDialogProps> = ({
       form.reset();
       onOpenChange(false);
     },
-    onError: (error: any) => {
+    onError: (error) => {
       toast({
         title: 'Erreur',
-        description: error?.message || 'Impossible de créer le modèle.',
+        description: error.message || 'Impossible de créer le modèle.',
         variant: 'destructive',
       });
     },

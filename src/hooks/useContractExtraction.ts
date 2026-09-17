@@ -1,5 +1,6 @@
 
 import { useMutation } from '@tanstack/react-query';
+import type { Json } from '@/integrations/supabase/types';
 import { supabase } from '@/integrations/supabase/client';
 
 interface ExtractionRequest {
@@ -10,7 +11,7 @@ interface ExtractionRequest {
 
 interface ExtractionResponse {
   success: boolean;
-  extracted_data: any;
+  extracted_data: Json;
   confidence_score: number;
   extraction_type: string;
   error?: string;

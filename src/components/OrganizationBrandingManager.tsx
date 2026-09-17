@@ -120,10 +120,10 @@ const OrganizationBrandingManager: React.FC = () => {
         description: 'Configuration de branding mise à jour.',
       });
     },
-    onError: (error: any) => {
+    onError: (error) => {
       toast({
         title: 'Erreur',
-        description: error?.message || 'Impossible de mettre à jour le branding.',
+        description: error.message || 'Impossible de mettre à jour le branding.',
         variant: 'destructive',
       });
     },
@@ -164,7 +164,7 @@ const OrganizationBrandingManager: React.FC = () => {
             Branding Organisationnel
           </CardTitle>
           <CardDescription className="text-slate-400">
-            Personnalisez l'apparence de votre plateforme Contract Manager
+            Personnalisez l'apparence de votre plateforme JURIX
           </CardDescription>
         </CardHeader>
       </Card>

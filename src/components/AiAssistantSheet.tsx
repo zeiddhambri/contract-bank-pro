@@ -30,7 +30,7 @@ const initialMessages: Message[] = [
   {
     role: "assistant",
     content:
-      "Bonjour 👋\nJe suis votre assistant IA pour CONTRACT MANAGER. Posez-moi vos questions sur la plateforme, les statistiques, ou demandez-moi de l'aide technique !",
+      "Bonjour 👋\nJe suis votre assistant IA de JURIX. Posez-moi vos questions sur la plateforme, les statistiques, ou demandez-moi de l'aide technique !",
   },
 ];
 

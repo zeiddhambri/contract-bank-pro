@@ -123,10 +123,10 @@ const AddFieldDialog: React.FC<AddFieldDialogProps> = ({
       form.reset();
       onOpenChange(false);
     },
-    onError: (error: any) => {
+    onError: (error) => {
       toast({
         title: 'Erreur',
-        description: error?.message || 'Impossible d\'ajouter le champ.',
+        description: error.message || 'Impossible d\'ajouter le champ.',
         variant: 'destructive',
       });
     },
