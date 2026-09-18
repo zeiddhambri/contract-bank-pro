@@ -26,23 +26,23 @@ const NotificationCenter = () => {
     queryKey: ['notifications'],
     queryFn: async (): Promise<Notification[]> => {
       const { data, error } = await supabase
-        .from('notifications')
+        .from('notifications' as any)
         .select('*')
         .order('created_at', { ascending: false })
         .limit(10);
-      
+
       if (error) throw error;
-      return data || [];
+      return (data as Notification[]) || [];
     },
   });
 
   const markAsReadMutation = useMutation({
     mutationFn: async (notificationId: string) => {
-      const { error } = await supabase
-        .from('notifications')
+      const { error } = await (supabase
+        .from('notifications' as any) as any)
         .update({ is_read: true })
         .eq('id', notificationId);
-      
+
       if (error) throw error;
     },
     onSuccess: () => {
@@ -52,11 +52,11 @@ const NotificationCenter = () => {
 
   const markAllAsReadMutation = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase
-        .from('notifications')
+      const { error } = await (supabase
+        .from('notifications' as any) as any)
         .update({ is_read: true })
         .eq('is_read', false);
-      
+
       if (error) throw error;
     },
     onSuccess: () => {
