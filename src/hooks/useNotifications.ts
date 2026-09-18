@@ -22,13 +22,13 @@ export const useNotifications = () => {
   } = useQuery<Notification[]>({
     queryKey: ['notifications'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('notifications' as any)
+      const { data, error } = await (supabase as any)
+        .from('notifications')
         .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return (data as Notification[]) || [];
+      return ((data || []) as unknown as Notification[]);
     },
   });
 
