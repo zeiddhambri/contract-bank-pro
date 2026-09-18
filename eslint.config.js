@@ -5,7 +5,16 @@ import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["dist"] },
+  {
+    ignores: [
+      "dist",
+      // Composant vendu par shadcn, jamais importé par l'application : exclu du
+      // type-check (tsconfig.app.json) pour la même raison. Le contrôler
+      // imposerait de réécrire un fichier mort ; sa suppression est prévue avec
+      // le nettoyage du design system (R11.1).
+      "src/components/ui/chart.tsx",
+    ],
+  },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ["**/*.{ts,tsx}"],
