@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,11 +12,20 @@ import NotificationCenter from '@/components/NotificationCenter';
 import SearchBar from '@/components/SearchBar';
 import ContractKanban from '@/components/ContractKanban';
 import FinancialDashboard from '@/components/FinancialDashboard';
+import CreateContractDialog from '@/components/CreateContractDialog';
 
 const Dashboard = () => {
+  const queryClient = useQueryClient();
   const { userProfile, bank, signOut } = useAuth();
   const [activeView, setActiveView] = useState<'overview' | 'contracts' | 'kanban' | 'financials' | 'analytics'>('overview');
   const [showNotifications, setShowNotifications] = useState(false);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+
+  const handleContractCreated = () => {
+    queryClient.invalidateQueries({ queryKey: ['contracts'] });
+    // Switch to contracts view so the user sees the new contract immediately.
+    setActiveView('contracts');
+  };
 
   const navigationItems = [
     { key: 'overview', label: 'Vue d\'ensemble', icon: BarChart3 },
@@ -185,7 +195,10 @@ const Dashboard = () => {
             </div>
             
             <div className="mt-8">
-              <Button className="w-full bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700">
+              <Button
+                className="w-full bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700"
+                onClick={() => setIsCreateDialogOpen(true)}
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 Nouveau Contrat
               </Button>
@@ -198,6 +211,12 @@ const Dashboard = () => {
           {renderContent()}
         </main>
       </div>
+
+      <CreateContractDialog
+        open={isCreateDialogOpen}
+        onOpenChange={setIsCreateDialogOpen}
+        onContractCreated={handleContractCreated}
+      />
     </div>
   );
 };
