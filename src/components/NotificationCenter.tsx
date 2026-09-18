@@ -25,14 +25,14 @@ const NotificationCenter = () => {
   const { data: notifications, isLoading } = useQuery({
     queryKey: ['notifications'],
     queryFn: async (): Promise<Notification[]> => {
-      const { data, error } = await supabase
-        .from('notifications' as any)
+      const { data, error } = await (supabase as any)
+        .from('notifications')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(10);
 
       if (error) throw error;
-      return (data as Notification[]) || [];
+      return ((data || []) as unknown as Notification[]);
     },
   });
 
