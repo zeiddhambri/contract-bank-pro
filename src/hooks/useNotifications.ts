@@ -62,13 +62,13 @@ export const useNotifications = () => {
 
   const createNotificationMutation = useMutation({
     mutationFn: async (notification: Omit<Notification, 'id' | 'created_at' | 'is_read'>) => {
-      const { error } = await supabase
-        .from('notifications')
+      const { error } = await (supabase
+        .from('notifications' as any) as any)
         .insert({
           ...notification,
           is_read: false
         });
-      
+
       if (error) throw error;
     },
     onSuccess: () => {
