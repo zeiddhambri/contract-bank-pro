@@ -57,10 +57,10 @@ const TemplateWorkflowManager: React.FC<TemplateWorkflowManagerProps> = ({
         description: 'Étape supprimée avec succès.',
       });
     },
-    onError: (error: any) => {
+    onError: (error) => {
       toast({
         title: 'Erreur',
-        description: error?.message || 'Impossible de supprimer l\'étape.',
+        description: error.message || 'Impossible de supprimer l\'étape.',
         variant: 'destructive',
       });
     },

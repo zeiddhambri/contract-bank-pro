@@ -1,265 +1,315 @@
+// ============================================================================
+// Tableau de bord financier (R2)
+// ----------------------------------------------------------------------------
+// Règles d'intégrité appliquées ici :
+//   • aucune somme de montants dans des devises différentes — la devise de
+//     référence est celle qui porte le plus d'encours, les autres sont affichées
+//     séparément et signalées ;
+//   • aucun pourcentage `NaN` (dénominateur nul → « — ») ;
+//   • plus de données inventées (les anciennes séries « Jan → Jun » et la
+//     répartition « Payé / En attente / En retard » étaient codées en dur).
+// ============================================================================
+import React from "react";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Legend,
+  Line,
+  LineChart,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import { AlertTriangle, BadgeDollarSign, Hourglass, TrendingUp } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAllContracts } from "@/hooks/useContracts";
+import {
+  formatCurrency,
+  formatCurrencyTotals,
+  formatNumber,
+  formatPct,
+} from "@/lib/contract-helpers";
+import {
+  amountsByType,
+  countOtherCurrencies,
+  monthlySeries,
+  primaryCurrency,
+  statusCounters,
+  type Contract,
+} from "@/lib/contract-metrics";
 
-import React from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { TrendingUp, TrendingDown, DollarSign, CreditCard, PieChart as PieChartIcon, BarChart3 } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
+const PHASE_COLORS = {
+  pipeline: "#f59e0b",
+  running: "#22c55e",
+  closed: "#6b7280",
+} as const;
+
+const PHASE_LABELS = {
+  pipeline: "Mise en place",
+  running: "En exécution",
+  closed: "Clôturé",
+} as const;
 
 const FinancialDashboard = () => {
-  const { data: contracts, isLoading } = useQuery({
-    queryKey: ['financial-data'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('contracts')
-        .select('*');
-      
-      if (error) throw error;
-      return data || [];
-    },
-  });
-
-  // Calculer les métriques financières
-  const totalRevenue = contracts?.reduce((sum, contract) => sum + contract.montant, 0) || 0;
-  const activeRevenue = contracts?.filter(c => c.statut === 'active').reduce((sum, contract) => sum + contract.montant, 0) || 0;
-  const pendingRevenue = contracts?.filter(c => c.statut === 'pending_signature').reduce((sum, contract) => sum + contract.montant, 0) || 0;
-  
-  // Données simulées pour les graphiques
-  const monthlyRevenue = [
-    { month: 'Jan', revenue: 45000, contracts: 12, target: 50000 },
-    { month: 'Fév', revenue: 67000, contracts: 19, target: 55000 },
-    { month: 'Mar', revenue: 52000, contracts: 15, target: 60000 },
-    { month: 'Avr', revenue: 78000, contracts: 22, target: 65000 },
-    { month: 'Mai', revenue: 63000, contracts: 18, target: 70000 },
-    { month: 'Jun', revenue: 89000, contracts: 25, target: 75000 },
-  ];
-
-  const revenueByType = [
-    { name: 'Crédit immobilier', value: 320000, color: '#3b82f6' },
-    { name: 'Crédit auto', value: 180000, color: '#10b981' },
-    { name: 'Crédit personnel', value: 120000, color: '#f59e0b' },
-    { name: 'Crédit professionnel', value: 95000, color: '#ef4444' },
-  ];
-
-  const paymentStatus = [
-    { status: 'Payé', amount: 450000, percentage: 65, color: '#10b981' },
-    { status: 'En attente', amount: 180000, percentage: 26, color: '#f59e0b' },
-    { status: 'En retard', amount: 62000, percentage: 9, color: '#ef4444' },
-  ];
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'EUR',
-      minimumFractionDigits: 0
-    }).format(value);
-  };
-
-  const formatPercentage = (value: number) => {
-    return `${value.toFixed(1)}%`;
-  };
+  // Portefeuille complet partagé (clé ['contracts','all']).
+  const { data: contracts, isLoading } = useAllContracts();
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          {[...Array(4)].map((_, i) => (
-            <Card key={i} className="animate-pulse">
-              <CardContent className="p-6">
-                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                <div className="h-8 bg-gray-200 rounded w-1/2"></div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+        {[0, 1, 2, 3].map((card) => (
+          <Card key={card} className="animate-pulse">
+            <CardContent className="p-6">
+              <div className="mb-2 h-4 w-3/4 rounded bg-gray-200" />
+              <div className="h-8 w-1/2 rounded bg-gray-200" />
+            </CardContent>
+          </Card>
+        ))}
       </div>
     );
   }
 
+  const rows = contracts ?? [];
+  const counters = statusCounters(rows);
+  const currency = primaryCurrency(rows);
+  const monthly = monthlySeries(rows, currency, 6);
+  const byType = amountsByType(rows, currency);
+  const otherCurrencies = countOtherCurrencies(rows, currency);
+
+  const phases = [
+    { key: "pipeline" as const, count: counters.pipeline, amounts: counters.pipelineAmounts },
+    { key: "running" as const, count: counters.active, amounts: counters.activeAmounts },
+  ];
+
+  const phaseDistribution = [
+    { name: PHASE_LABELS.pipeline, value: counters.pipeline, color: PHASE_COLORS.pipeline },
+    { name: PHASE_LABELS.running, value: counters.active, color: PHASE_COLORS.running },
+    { name: PHASE_LABELS.closed, value: counters.closed, color: PHASE_COLORS.closed },
+  ].filter((entry) => entry.value > 0);
+
+  const kpis = [
+    {
+      label: "Encours total",
+      value: formatCurrencyTotals(counters.totalAmounts),
+      detail: `${formatNumber(counters.total)} contrat(s)`,
+      icon: BadgeDollarSign,
+      tone: "bg-blue-100 text-blue-600",
+    },
+    {
+      label: "En exécution",
+      value: formatCurrencyTotals(counters.activeAmounts),
+      detail: `${formatNumber(counters.active)} contrat(s) · ${formatPct(counters.active, counters.total)} du portefeuille`,
+      icon: TrendingUp,
+      tone: "bg-green-100 text-green-600",
+    },
+    {
+      label: "En mise en place",
+      value: formatCurrencyTotals(counters.pipelineAmounts),
+      detail: `${formatNumber(counters.pipeline)} contrat(s) avant déblocage`,
+      icon: Hourglass,
+      tone: "bg-yellow-100 text-yellow-600",
+    },
+    {
+      label: "En alerte",
+      value: formatCurrencyTotals(counters.alertAmounts),
+      detail:
+        counters.alerts > 0
+          ? `${formatNumber(counters.alerts)} contrat(s) à traiter`
+          : "Aucun incident déclaré",
+      icon: AlertTriangle,
+      tone: "bg-red-100 text-red-600",
+    },
+  ];
+
   return (
     <div className="space-y-6">
-      {/* Métriques financières principales */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Chiffre d'Affaires Total</p>
-                <p className="text-3xl font-bold text-gray-900">{formatCurrency(totalRevenue)}</p>
-                <div className="flex items-center mt-2">
-                  <TrendingUp className="h-4 w-4 text-green-500 mr-1" />
-                  <span className="text-sm text-green-600">+15.3% vs mois dernier</span>
+      {/* Indicateurs financiers --------------------------------------------- */}
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+        {kpis.map((kpi) => (
+          <Card key={kpi.label}>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-gray-600">{kpi.label}</p>
+                  <p className="truncate text-2xl font-bold text-gray-900">{kpi.value}</p>
+                  <p className="mt-2 text-sm text-gray-600">{kpi.detail}</p>
+                </div>
+                <div
+                  className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${kpi.tone}`}
+                >
+                  <kpi.icon className="h-6 w-6" aria-hidden="true" />
                 </div>
               </div>
-              <div className="h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center">
-                <DollarSign className="h-6 w-6 text-blue-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Revenus Actifs</p>
-                <p className="text-3xl font-bold text-green-600">{formatCurrency(activeRevenue)}</p>
-                <div className="flex items-center mt-2">
-                  <span className="text-sm text-gray-600">{formatPercentage((activeRevenue / totalRevenue) * 100)} du total</span>
-                </div>
-              </div>
-              <div className="h-12 w-12 bg-green-100 rounded-full flex items-center justify-center">
-                <TrendingUp className="h-6 w-6 text-green-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Revenus Pendants</p>
-                <p className="text-3xl font-bold text-yellow-600">{formatCurrency(pendingRevenue)}</p>
-                <div className="flex items-center mt-2">
-                  <span className="text-sm text-gray-600">En attente de signature</span>
-                </div>
-              </div>
-              <div className="h-12 w-12 bg-yellow-100 rounded-full flex items-center justify-center">
-                <CreditCard className="h-6 w-6 text-yellow-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Taux de Conversion</p>
-                <p className="text-3xl font-bold text-purple-600">78.5%</p>
-                <div className="flex items-center mt-2">
-                  <TrendingUp className="h-4 w-4 text-green-500 mr-1" />
-                  <span className="text-sm text-green-600">+2.1% ce mois</span>
-                </div>
-              </div>
-              <div className="h-12 w-12 bg-purple-100 rounded-full flex items-center justify-center">
-                <BarChart3 className="h-6 w-6 text-purple-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
-      {/* Graphiques de performance */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {otherCurrencies > 0 && (
+        <p className="text-xs text-gray-500">
+          Graphiques en {currency} (devise la plus représentée) ·{" "}
+          {otherCurrencies} contrat(s) dans une autre devise sont comptés mais non convertis.
+        </p>
+      )}
+
+      {/* Évolution et composition ------------------------------------------- */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Évolution du Chiffre d'Affaires</CardTitle>
-            <Button variant="outline" size="sm">
-              Exporter
-            </Button>
+          <CardHeader>
+            <CardTitle>Montants engagés par mois de création ({currency})</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={350}>
-              <LineChart data={monthlyRevenue}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis tickFormatter={(value) => formatCurrency(value)} />
-                <Tooltip formatter={(value) => formatCurrency(Number(value))} />
-                <Line type="monotone" dataKey="revenue" stroke="#3b82f6" strokeWidth={3} name="Réalisé" />
-                <Line type="monotone" dataKey="target" stroke="#10b981" strokeWidth={2} strokeDasharray="5 5" name="Objectif" />
-              </LineChart>
-            </ResponsiveContainer>
+            {monthly.every((m) => m.amount === 0) ? (
+              <p className="py-16 text-center text-sm text-gray-500">
+                Aucun montant enregistré sur la période.
+              </p>
+            ) : (
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={monthly}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" />
+                  <YAxis
+                    tickFormatter={(value) => formatCurrency(Number(value), currency, 0)}
+                    width={110}
+                  />
+                  <Tooltip
+                    formatter={(value) => [formatCurrency(Number(value), currency), "Montant"]}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="amount"
+                    stroke="#3b82f6"
+                    strokeWidth={2}
+                    name="Montant"
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            )}
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Répartition par Type de Crédit</CardTitle>
+            <CardTitle>Encours par type de contrat ({currency})</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={350}>
-              <PieChart>
-                <Pie
-                  data={revenueByType}
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={120}
-                  fill="#8884d8"
-                  dataKey="value"
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                >
-                  {revenueByType.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(value) => formatCurrency(Number(value))} />
-              </PieChart>
-            </ResponsiveContainer>
+            {byType.length === 0 ? (
+              <p className="py-16 text-center text-sm text-gray-500">
+                Aucun montant dans cette devise.
+              </p>
+            ) : (
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={byType} layout="vertical" margin={{ left: 24 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis
+                    type="number"
+                    tickFormatter={(value) => formatCurrency(Number(value), currency, 0)}
+                    width={110}
+                  />
+                  <YAxis type="category" dataKey="name" width={140} />
+                  <Tooltip
+                    formatter={(value) => [formatCurrency(Number(value), currency), "Encours"]}
+                  />
+                  <Bar dataKey="value" fill="#8b5cf6" name="Encours" radius={[0, 4, 4, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
           </CardContent>
         </Card>
       </div>
 
-      {/* Statut des paiements */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <PieChartIcon className="h-5 w-5" />
-            Statut des Paiements
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {paymentStatus.map((status, index) => (
-              <div key={index} className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">{status.status}</span>
-                  <Badge 
-                    variant="outline" 
-                    style={{ borderColor: status.color, color: status.color }}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <Card className="lg:col-span-1">
+          <CardHeader>
+            <CardTitle>Répartition par phase</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {phaseDistribution.length === 0 ? (
+              <p className="py-16 text-center text-sm text-gray-500">Aucun contrat.</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={240}>
+                <PieChart>
+                  <Pie
+                    data={phaseDistribution}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={55}
+                    outerRadius={90}
+                    dataKey="value"
+                    label={({ name, value }) => `${name} (${value})`}
                   >
-                    {status.percentage}%
-                  </Badge>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div 
-                    className="h-2 rounded-full transition-all duration-300"
-                    style={{ 
-                      width: `${status.percentage}%`, 
-                      backgroundColor: status.color 
-                    }}
-                  ></div>
-                </div>
-                <p className="text-lg font-semibold" style={{ color: status.color }}>
-                  {formatCurrency(status.amount)}
-                </p>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+                    {phaseDistribution.map((entry) => (
+                      <Cell key={entry.name} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value) => [`${value} contrat(s)`, "Effectif"]} />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
 
-      {/* Revenus par mois avec barres */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Performance Mensuelle Détaillée</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={400}>
-            <BarChart data={monthlyRevenue}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" />
-              <YAxis tickFormatter={(value) => formatCurrency(value)} />
-              <Tooltip formatter={(value) => formatCurrency(Number(value))} />
-              <Bar dataKey="revenue" fill="#3b82f6" name="Chiffre d'affaires" />
-              <Bar dataKey="target" fill="#10b981" name="Objectif" opacity={0.7} />
-            </BarChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle>Encours par phase</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {phases.every((phase) => phase.amounts.length === 0) ? (
+              <p className="py-16 text-center text-sm text-gray-500">Aucun encours.</p>
+            ) : (
+              <ul className="divide-y">
+                {phases.map((phase) => (
+                  <li key={phase.key} className="flex items-center justify-between py-3">
+                    <div className="flex items-center gap-3">
+                      <span
+                        className="inline-block h-3 w-3 rounded-full"
+                        style={{ backgroundColor: PHASE_COLORS[phase.key] }}
+                        aria-hidden="true"
+                      />
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">
+                          {PHASE_LABELS[phase.key]}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {formatNumber(phase.count)} contrat(s) ·{" "}
+                          {formatPct(phase.count, counters.total)} du portefeuille
+                        </p>
+                      </div>
+                    </div>
+                    <p className="text-sm font-semibold text-gray-900">
+                      {formatCurrencyTotals(phase.amounts)}
+                    </p>
+                  </li>
+                ))}
+                <li className="flex items-center justify-between py-3">
+                  <div className="flex items-center gap-3">
+                    <span
+                      className="inline-block h-3 w-3 rounded-full"
+                      style={{ backgroundColor: PHASE_COLORS.closed }}
+                      aria-hidden="true"
+                    />
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">Clôturé</p>
+                      <p className="text-xs text-gray-500">
+                        Expiré, renouvelé, refus client ou résilié
+                      </p>
+                    </div>
+                  </div>
+                  <p className="text-sm font-semibold text-gray-900">
+                    {formatNumber(counters.closed)} contrat(s)
+                  </p>
+                </li>
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };

@@ -8,16 +8,17 @@ import { Badge } from '@/components/ui/badge';
 import { Bell, Check, AlertTriangle, Info, CheckCircle, XCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import type { Tables } from '@/integrations/supabase/types';
 
-interface Notification {
-  id: string;
-  title: string;
-  message: string;
-  type: 'info' | 'warning' | 'error' | 'success';
+type NotificationType = 'info' | 'warning' | 'error' | 'success';
+
+const NOTIFICATION_TYPES: NotificationType[] = ['info', 'warning', 'error', 'success'];
+
+type Notification = Omit<Tables<'notifications'>, 'type' | 'is_read' | 'created_at'> & {
+  type: NotificationType;
   is_read: boolean;
-  contract_id?: string;
   created_at: string;
-}
+};
 
 const NotificationCenter = () => {
   const queryClient = useQueryClient();
@@ -25,24 +26,32 @@ const NotificationCenter = () => {
   const { data: notifications, isLoading } = useQuery({
     queryKey: ['notifications'],
     queryFn: async (): Promise<Notification[]> => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('notifications')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(10);
-
+      
       if (error) throw error;
-      return ((data || []) as unknown as Notification[]);
+      // Le type est contraint en base ; on l'aligne sur l'union attendue par l'UI.
+      return (data ?? []).map((row) => ({
+        ...row,
+        is_read: row.is_read ?? false,
+        created_at: row.created_at ?? new Date().toISOString(),
+        type: (NOTIFICATION_TYPES.includes(row.type as NotificationType)
+          ? row.type
+          : 'info') as NotificationType,
+      }));
     },
   });
 
   const markAsReadMutation = useMutation({
     mutationFn: async (notificationId: string) => {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('notifications')
         .update({ is_read: true })
         .eq('id', notificationId);
-
+      
       if (error) throw error;
     },
     onSuccess: () => {
@@ -52,11 +61,11 @@ const NotificationCenter = () => {
 
   const markAllAsReadMutation = useMutation({
     mutationFn: async () => {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('notifications')
         .update({ is_read: true })
         .eq('is_read', false);
-
+      
       if (error) throw error;
     },
     onSuccess: () => {

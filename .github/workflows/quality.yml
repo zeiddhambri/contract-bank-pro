@@ -1,0 +1,64 @@
+# ============================================================================
+# Filet de qualité minimal (R5.1 / R5.2)
+# ----------------------------------------------------------------------------
+# Bloquant : type-check en mode strict, ESLint et build de production.
+# ESLint était informatif tant que la dette héritée (24 erreurs) rendait la CI
+# rouge en permanence ; cette dette est purgée (0 erreur au chantier R4), l'étape
+# redevient donc bloquante. Les 8 avertissements restants
+# (`react-refresh/only-export-components`) sont tolérés : les corriger impose de
+# scinder des fichiers qui exportent à la fois un composant et ses constantes.
+# ============================================================================
+name: quality
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  web:
+    name: Type-check, lint et build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Dépendances
+        run: npm ci
+
+      - name: Type-check (strict)
+        run: npm run typecheck
+
+      - name: ESLint (bloquant)
+        run: npm run lint
+
+      - name: Build de production
+        run: npm run build
+        env:
+          # Valeurs factices : le build vérifie la compilation, pas la connexion.
+          VITE_SUPABASE_URL: https://example.supabase.co
+          VITE_SUPABASE_ANON_KEY: build-only-placeholder-key
+
+  functions:
+    name: Edge Functions (syntaxe)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Vérifier que les fonctions se chargent (deno check si disponible)
+        # Imports depuis esm.sh : étape informative, jamais bloquante.
+        continue-on-error: true
+        run: |
+          if command -v deno >/dev/null 2>&1; then
+            deno check --no-lock supabase/functions/*/index.ts supabase/functions/_shared/*.ts
+          else
+            echo "deno absent de l'image : vérification ignorée (npm i -g deno pour l'activer)"
+          fi

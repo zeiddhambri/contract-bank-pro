@@ -1,5 +1,8 @@
 
 import type { Config } from "tailwindcss";
+// Import ESM plutôt que `require()` : la config est chargée en TypeScript par
+// Tailwind/Vite, et le style `require` est interdit par la règle lint.
+import tailwindcssAnimate from "tailwindcss-animate";
 
 export default {
 	darkMode: ["class"],
@@ -128,5 +131,5 @@ export default {
 			}
 		}
 	},
-	plugins: [require("tailwindcss-animate")],
+	plugins: [tailwindcssAnimate],
 } satisfies Config;

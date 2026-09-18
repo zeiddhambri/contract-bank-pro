@@ -68,10 +68,10 @@ const TemplateBasicInfo: React.FC<TemplateBasicInfoProps> = ({ template }) => {
         description: 'Modèle mis à jour avec succès.',
       });
     },
-    onError: (error: any) => {
+    onError: (error) => {
       toast({
         title: 'Erreur',
-        description: error?.message || 'Impossible de mettre à jour le modèle.',
+        description: error.message || 'Impossible de mettre à jour le modèle.',
         variant: 'destructive',
       });
     },

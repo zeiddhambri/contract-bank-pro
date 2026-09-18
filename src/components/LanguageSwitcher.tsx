@@ -36,7 +36,7 @@ const LanguageSwitcher = () => {
         <Button 
           variant="outline" 
           size="icon"
-          className="border-slate-600 bg-black/20 hover:bg-slate-700/50 text-slate-300 hover:text-white"
+          className="border-slate-300 bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-900"
         >
           <Languages className="h-4 w-4" />
           <span className="sr-only">Changer la langue</span>
@@ -44,13 +44,13 @@ const LanguageSwitcher = () => {
       </DropdownMenuTrigger>
       <DropdownMenuContent 
         align="end"
-        className="bg-black/90 border-slate-700/50 backdrop-blur-sm"
+        className="border-slate-200 bg-white shadow-md"
       >
         {languages.map((lang) => (
           <DropdownMenuItem 
             key={lang.code} 
             onClick={() => changeLanguage(lang.code)}
-            className={`text-slate-300 hover:bg-slate-700/50 focus:bg-slate-700/50 cursor-pointer ${
+            className={`text-slate-700 hover:bg-slate-100 focus:bg-slate-100 cursor-pointer ${
               i18n.language === lang.code ? 'bg-orange-600/20 text-orange-400' : ''
             }`}
           >

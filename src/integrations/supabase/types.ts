@@ -117,6 +117,38 @@ export type Database = {
           },
         ]
       }
+      ai_usage: {
+        Row: {
+          calls: number
+          day: string
+          tokens: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          calls?: number
+          day?: string
+          tokens?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          calls?: number
+          day?: string
+          tokens?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_usage_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action: string
@@ -166,6 +198,7 @@ export type Database = {
         Row: {
           ai_features_enabled: boolean | null
           created_at: string
+          default_currency: string
           domain_config: Json | null
           id: string
           logo_url: string | null
@@ -178,6 +211,7 @@ export type Database = {
         Insert: {
           ai_features_enabled?: boolean | null
           created_at?: string
+          default_currency?: string
           domain_config?: Json | null
           id?: string
           logo_url?: string | null
@@ -190,6 +224,7 @@ export type Database = {
         Update: {
           ai_features_enabled?: boolean | null
           created_at?: string
+          default_currency?: string
           domain_config?: Json | null
           id?: string
           logo_url?: string | null
@@ -200,6 +235,76 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      clauses: {
+        Row: {
+          bank_id: string
+          category: string
+          content: string
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+          language: string
+          tags: string[]
+          title: string
+          updated_at: string
+          updated_by: string | null
+          version: number
+        }
+        Insert: {
+          bank_id?: string
+          category: string
+          content: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          language?: string
+          tags?: string[]
+          title: string
+          updated_at?: string
+          updated_by?: string | null
+          version?: number
+        }
+        Update: {
+          bank_id?: string
+          category?: string
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          language?: string
+          tags?: string[]
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clauses_bank_id_fkey"
+            columns: ["bank_id"]
+            isOneToOne: false
+            referencedRelation: "banks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clauses_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clauses_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       contract_templates: {
         Row: {
@@ -245,55 +350,85 @@ export type Database = {
       contracts: {
         Row: {
           agence: string
-          bank_id: string
+          assigned_to: string | null
+          bank_id: string | null
           client: string
           created_at: string
+          currency: string
           date_decision: string
           date_signature: string | null
+          deleted_at: string | null
           description: string | null
+          expiry_date: string | null
           file_path: string | null
           garantie: string
           garanties: Json
           id: string
+          metadata: Json | null
           montant: number
+          payment_terms: string | null
+          priority: string | null
           reference_decision: string
-          statut: string
+          renewal_date: string | null
+          risk_level: string | null
+          statut: Database["public"]["Enums"]["contract_status"]
+          tags: string[] | null
           type: string
           updated_at: string
         }
         Insert: {
           agence: string
-          bank_id: string
+          assigned_to?: string | null
+          bank_id?: string | null
           client: string
           created_at?: string
+          currency?: string
           date_decision?: string
           date_signature?: string | null
+          deleted_at?: string | null
           description?: string | null
+          expiry_date?: string | null
           file_path?: string | null
           garantie: string
           garanties?: Json
           id?: string
+          metadata?: Json | null
           montant: number
-          reference_decision: string
-          statut?: string
+          payment_terms?: string | null
+          priority?: string | null
+          reference_decision?: string
+          renewal_date?: string | null
+          risk_level?: string | null
+          statut?: Database["public"]["Enums"]["contract_status"]
+          tags?: string[] | null
           type: string
           updated_at?: string
         }
         Update: {
           agence?: string
-          bank_id?: string
+          assigned_to?: string | null
+          bank_id?: string | null
           client?: string
           created_at?: string
+          currency?: string
           date_decision?: string
           date_signature?: string | null
+          deleted_at?: string | null
           description?: string | null
+          expiry_date?: string | null
           file_path?: string | null
           garantie?: string
           garanties?: Json
           id?: string
+          metadata?: Json | null
           montant?: number
+          payment_terms?: string | null
+          priority?: string | null
           reference_decision?: string
-          statut?: string
+          renewal_date?: string | null
+          risk_level?: string | null
+          statut?: Database["public"]["Enums"]["contract_status"]
+          tags?: string[] | null
           type?: string
           updated_at?: string
         }
@@ -303,6 +438,234 @@ export type Database = {
             columns: ["bank_id"]
             isOneToOne: false
             referencedRelation: "banks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contract_comments: {
+        Row: {
+          comment: string
+          contract_id: string | null
+          created_at: string | null
+          id: string
+          tagged_users: string[] | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          comment: string
+          contract_id?: string | null
+          created_at?: string | null
+          id?: string
+          tagged_users?: string[] | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          comment?: string
+          contract_id?: string | null
+          created_at?: string | null
+          id?: string
+          tagged_users?: string[] | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_comments_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contract_comments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contract_reminders: {
+        Row: {
+          contract_id: string | null
+          created_at: string | null
+          id: string
+          is_sent: boolean | null
+          remind_at: string
+          reminder_type: string
+        }
+        Insert: {
+          contract_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_sent?: boolean | null
+          remind_at: string
+          reminder_type: string
+        }
+        Update: {
+          contract_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_sent?: boolean | null
+          remind_at?: string
+          reminder_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_reminders_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contract_status_history: {
+        Row: {
+          bank_id: string | null
+          changed_at: string
+          changed_by: string | null
+          changed_by_email: string | null
+          contract_id: string
+          from_status: Database["public"]["Enums"]["contract_status"] | null
+          id: string
+          reason: string | null
+          to_status: Database["public"]["Enums"]["contract_status"]
+        }
+        Insert: {
+          bank_id?: string | null
+          changed_at?: string
+          changed_by?: string | null
+          changed_by_email?: string | null
+          contract_id: string
+          from_status?: Database["public"]["Enums"]["contract_status"] | null
+          id?: string
+          reason?: string | null
+          to_status: Database["public"]["Enums"]["contract_status"]
+        }
+        Update: {
+          bank_id?: string | null
+          changed_at?: string
+          changed_by?: string | null
+          changed_by_email?: string | null
+          contract_id?: string
+          from_status?: Database["public"]["Enums"]["contract_status"] | null
+          id?: string
+          reason?: string | null
+          to_status?: Database["public"]["Enums"]["contract_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_status_history_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contract_status_transitions: {
+        Row: {
+          allowed_roles: Database["public"]["Enums"]["app_role"][]
+          from_status: Database["public"]["Enums"]["contract_status"]
+          to_status: Database["public"]["Enums"]["contract_status"]
+        }
+        Insert: {
+          allowed_roles?: Database["public"]["Enums"]["app_role"][]
+          from_status: Database["public"]["Enums"]["contract_status"]
+          to_status: Database["public"]["Enums"]["contract_status"]
+        }
+        Update: {
+          allowed_roles?: Database["public"]["Enums"]["app_role"][]
+          from_status?: Database["public"]["Enums"]["contract_status"]
+          to_status?: Database["public"]["Enums"]["contract_status"]
+        }
+        Relationships: []
+      }
+      contract_versions: {
+        Row: {
+          changes_description: string | null
+          contract_id: string | null
+          created_at: string | null
+          file_path: string
+          id: string
+          uploaded_by: string | null
+          version_number: number
+        }
+        Insert: {
+          changes_description?: string | null
+          contract_id?: string | null
+          created_at?: string | null
+          file_path: string
+          id?: string
+          uploaded_by?: string | null
+          version_number?: number
+        }
+        Update: {
+          changes_description?: string | null
+          contract_id?: string | null
+          created_at?: string | null
+          file_path?: string
+          id?: string
+          uploaded_by?: string | null
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_versions_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          contract_id: string | null
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          message: string
+          title: string
+          type: string
+          user_id: string | null
+        }
+        Insert: {
+          contract_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message: string
+          title: string
+          type: string
+          user_id?: string | null
+        }
+        Update: {
+          contract_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          title?: string
+          type?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -363,6 +726,7 @@ export type Database = {
       profiles: {
         Row: {
           bank_id: string | null
+          created_at: string
           full_name: string | null
           id: string
           role: Database["public"]["Enums"]["app_role"]
@@ -370,6 +734,7 @@ export type Database = {
         }
         Insert: {
           bank_id?: string | null
+          created_at?: string
           full_name?: string | null
           id: string
           role?: Database["public"]["Enums"]["app_role"]
@@ -377,6 +742,7 @@ export type Database = {
         }
         Update: {
           bank_id?: string | null
+          created_at?: string
           full_name?: string | null
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
@@ -482,9 +848,39 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      generate_reference_decision: {
-        Args: Record<PropertyKey, never>
+      // ⚠️ Ajouts manuels en attendant `npm run db:types` (migration
+      // 20260915120000-harden-security.sql). Toute régénération des types
+      // reproduira ces entrées depuis le schéma réel.
+      ai_consume_quota: {
+        Args: { p_tokens?: number }
+        Returns: number
+      }
+      create_notification: {
+        Args: {
+          p_user_id: string
+          p_title: string
+          p_message: string
+          p_type?: string
+          p_contract_id?: string
+        }
         Returns: string
+      }
+      generate_reference_decision: {
+        Args: { p_bank_id: string }
+        Returns: string
+      }
+      record_ai_extraction: {
+        Args: {
+          p_contract_id: string
+          p_extraction_type: string
+          p_extracted_data: Json
+          p_confidence?: number
+        }
+        Returns: string
+      }
+      write_audit: {
+        Args: { p_action: string; p_details?: Json }
+        Returns: undefined
       }
       get_my_bank_id: {
         Args: Record<PropertyKey, never>
@@ -503,6 +899,21 @@ export type Database = {
         | "manager"
         | "validator"
         | "auditor"
+      contract_status:
+        | "draft"
+        | "pending_documents"
+        | "in_review"
+        | "approved"
+        | "pending_signature_b"
+        | "pending_signature_c"
+        | "pending_mortgage_registration"
+        | "pending_insurance"
+        | "active"
+        | "alert"
+        | "client_refused"
+        | "cancelled"
+        | "expired"
+        | "renewed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -625,6 +1036,22 @@ export const Constants = {
         "manager",
         "validator",
         "auditor",
+      ],
+      contract_status: [
+        "draft",
+        "pending_documents",
+        "in_review",
+        "approved",
+        "pending_signature_b",
+        "pending_signature_c",
+        "pending_mortgage_registration",
+        "pending_insurance",
+        "active",
+        "alert",
+        "client_refused",
+        "cancelled",
+        "expired",
+        "renewed",
       ],
     },
   },

@@ -2,31 +2,34 @@
   "compilerOptions": {
     "target": "ES2020",
     "useDefineForClassFields": true,
-    "lib": [
-      "ES2020",
-      "DOM",
-      "DOM.Iterable"
-    ],
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "skipLibCheck": true,
+
+    /* Bundler mode */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "isolatedModules": true,
     "moduleDetection": "force",
     "noEmit": true,
     "jsx": "react-jsx",
-    "strict": false,
+
+    /* Linting */
+    /* R5.1 : strict activé — les null/undefined sont vérifiés partout.
+       `chart.tsx` est un composant shadcn vendu, jamais importé, dont les types
+       ne suivent pas recharts v3 : il est exclu du contrôle (à supprimer ou à
+       réparer quand les graphiques R15 l'utiliseront). */
+    "strict": true,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noImplicitAny": false,
     "noFallthroughCasesInSwitch": false,
+
+    "baseUrl": ".",
     "paths": {
-      "@/*": [
-        "./src/*"
-      ]
+      "@/*": ["./src/*"]
     }
   },
-  "include": [
-    "src"
-  ]
+  "include": ["src"],
+  "exclude": ["src/components/ui/chart.tsx"]
 }

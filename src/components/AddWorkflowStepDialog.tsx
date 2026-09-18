@@ -106,10 +106,10 @@ const AddWorkflowStepDialog: React.FC<AddWorkflowStepDialogProps> = ({
       form.reset();
       onOpenChange(false);
     },
-    onError: (error: any) => {
+    onError: (error) => {
       toast({
         title: 'Erreur',
-        description: error?.message || 'Impossible d\'ajouter l\'étape.',
+        description: error.message || 'Impossible d\'ajouter l\'étape.',
         variant: 'destructive',
       });
     },

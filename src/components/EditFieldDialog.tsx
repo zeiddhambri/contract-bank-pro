@@ -6,7 +6,7 @@ import { toast } from '@/hooks/use-toast';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Tables } from '@/integrations/supabase/types';
+import type { Json, Tables } from '@/integrations/supabase/types';
 import {
   Dialog,
   DialogContent,
@@ -58,6 +58,16 @@ const FIELD_TYPES = [
   { value: 'checkbox', label: 'Case à cocher' },
 ];
 
+/**
+ * `field_options` est un JSON libre : on n'en extrait une liste éditable que
+ * si la forme attendue (`{ options: string[] }`) est présente.
+ */
+function fieldOptionsToLines(value: unknown): string {
+  if (!value || typeof value !== 'object') return '';
+  const options = (value as { options?: unknown }).options;
+  return Array.isArray(options) ? options.map((option) => String(option)).join('\n') : '';
+}
+
 const EditFieldDialog: React.FC<EditFieldDialogProps> = ({
   field,
   open,
@@ -72,8 +82,7 @@ const EditFieldDialog: React.FC<EditFieldDialogProps> = ({
       field_name: field.field_name,
       field_label: field.field_label,
       field_type: field.field_type,
-      field_options: field.field_options ? 
-        (field.field_options as any)?.options?.join('\n') || '' : '',
+      field_options: fieldOptionsToLines(field.field_options),
       is_required: field.is_required,
     },
   });
@@ -82,7 +91,7 @@ const EditFieldDialog: React.FC<EditFieldDialogProps> = ({
 
   const updateFieldMutation = useMutation({
     mutationFn: async (data: FieldFormData) => {
-      let fieldOptions = null;
+      let fieldOptions: Json | null = null;
       if (data.field_options && data.field_type === 'select') {
         try {
           const options = data.field_options.split('\n').filter(opt => opt.trim());
@@ -112,10 +121,10 @@ const EditFieldDialog: React.FC<EditFieldDialogProps> = ({
       });
       onOpenChange(false);
     },
-    onError: (error: any) => {
+    onError: (error) => {
       toast({
         title: 'Erreur',
-        description: error?.message || 'Impossible de mettre à jour le champ.',
+        description: error.message || 'Impossible de mettre à jour le champ.',
         variant: 'destructive',
       });
     },

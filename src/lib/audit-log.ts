@@ -1,35 +1,55 @@
+// ============================================================================
+// Piste d'audit — écriture via fonction SQL (R1.4 / B04)
+// ----------------------------------------------------------------------------
+// Le client n'a plus le droit d'insérer directement dans `audit_logs`
+// (INSERT révoqué) : l'attribution de l'auteur, de l'e-mail et de la banque est
+// faite côté serveur par `public.write_audit()`, ce qui rend la piste
+// non falsifiable.
+//
+// L'échec d'une journalisation ne doit jamais bloquer l'action utilisateur :
+// il est tracé côté console et remonté à l'administrateur via le code retour.
+// ============================================================================
+import { supabase } from '@/integrations/supabase/client';
+import type { Json } from '@/integrations/supabase/types';
 
-import { supabase } from "@/integrations/supabase/client";
-import { Json } from "@/integrations/supabase/types";
+/** Actions journalisées — à compléter au fil des fonctionnalités (R10.4). */
+export const AUDIT_ACTIONS = {
+  contractCreate: 'contract.create',
+  contractUpdate: 'contract.update',
+  contractDelete: 'contract.delete',
+  contractView: 'contract.view',
+  contractStatusChange: 'contract.status_change',
+  documentUpload: 'contract.document.upload',
+  documentDownload: 'contract.document.download',
+  documentReplace: 'contract.document.replace',
+  aiGenerate: 'ai.generate',
+  aiExtraction: 'ai.extraction',
+  aiAssistant: 'ai.assistant',
+  clauseCreate: 'clause.create',
+  clauseUpdate: 'clause.update',
+  clauseDelete: 'clause.delete',
+  exportData: 'data.export',
+  authSignIn: 'auth.sign_in',
+  authSignOut: 'auth.sign_out',
+  authResetPassword: 'auth.reset_password',
+} as const;
 
-export const logAction = async (action: string, details?: Json) => {
-    try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-            console.error("Audit log: No user found.");
-            return;
-        }
+export type AuditAction = (typeof AUDIT_ACTIONS)[keyof typeof AUDIT_ACTIONS] | string;
 
-        const { data: profile } = await supabase
-            .from('profiles')
-            .select('bank_id')
-            .eq('id', user.id)
-            .single();
+/**
+ * Journalise une action de l'utilisateur courant.
+ * @returns `true` si l'écriture a réussi.
+ */
+export async function logAction(action: AuditAction, details?: Json): Promise<boolean> {
+  const { error } = await supabase.rpc('write_audit', {
+    p_action: action,
+    p_details: details ?? null,
+  });
 
-        const { error } = await supabase
-            .from('audit_logs')
-            .insert({
-                user_id: user.id,
-                user_email: user.email,
-                action,
-                details: details ? details : undefined,
-                bank_id: profile?.bank_id || null,
-            });
-
-        if (error) {
-            console.error("Error logging action:", error);
-        }
-    } catch (error) {
-        console.error("Failed to log action:", error);
-    }
-};
+  if (error) {
+    // Volontairement discret : on n'expose pas le détail de la piste d'audit.
+    console.error(`Audit (${action}) non enregistré :`, error.message);
+    return false;
+  }
+  return true;
+}

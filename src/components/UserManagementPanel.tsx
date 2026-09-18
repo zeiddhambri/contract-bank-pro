@@ -73,10 +73,10 @@ const UserManagementPanel = () => {
                 description: "Le rôle de l'utilisateur a été mis à jour.",
             });
         },
-        onError: (error: any) => {
+        onError: (error) => {
             toast({
                 title: "Erreur",
-                description: error?.message || "Impossible de mettre à jour le rôle.",
+                description: error.message || "Impossible de mettre à jour le rôle.",
                 variant: "destructive",
             });
         },

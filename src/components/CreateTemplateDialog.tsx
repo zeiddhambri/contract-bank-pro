@@ -66,10 +66,14 @@ const CreateTemplateDialog: React.FC<CreateTemplateDialogProps> = ({
   const createTemplateMutation = useMutation({
     mutationFn: async (data: TemplateFormData) => {
       // Get user's bank_id from profiles
+      if (!user?.id) {
+        throw new Error('Session expirée : reconnectez-vous pour créer un modèle.');
+      }
+
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('bank_id')
-        .eq('id', user?.id)
+        .eq('id', user.id)
         .single();
 
       if (profileError || !profile?.bank_id) {
@@ -95,10 +99,10 @@ const CreateTemplateDialog: React.FC<CreateTemplateDialogProps> = ({
       form.reset();
       onOpenChange(false);
     },
-    onError: (error: any) => {
+    onError: (error) => {
       toast({
         title: 'Erreur',
-        description: error?.message || 'Impossible de créer le modèle.',
+        description: error.message || 'Impossible de créer le modèle.',
         variant: 'destructive',
       });
     },

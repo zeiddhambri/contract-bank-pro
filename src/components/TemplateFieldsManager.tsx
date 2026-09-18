@@ -58,10 +58,10 @@ const TemplateFieldsManager: React.FC<TemplateFieldsManagerProps> = ({
         description: 'Champ supprimé avec succès.',
       });
     },
-    onError: (error: any) => {
+    onError: (error) => {
       toast({
         title: 'Erreur',
-        description: error?.message || 'Impossible de supprimer le champ.',
+        description: error.message || 'Impossible de supprimer le champ.',
         variant: 'destructive',
       });
     },
