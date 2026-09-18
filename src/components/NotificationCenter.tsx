@@ -38,8 +38,8 @@ const NotificationCenter = () => {
 
   const markAsReadMutation = useMutation({
     mutationFn: async (notificationId: string) => {
-      const { error } = await (supabase
-        .from('notifications' as any) as any)
+      const { error } = await (supabase as any)
+        .from('notifications')
         .update({ is_read: true })
         .eq('id', notificationId);
 
@@ -52,8 +52,8 @@ const NotificationCenter = () => {
 
   const markAllAsReadMutation = useMutation({
     mutationFn: async () => {
-      const { error } = await (supabase
-        .from('notifications' as any) as any)
+      const { error } = await (supabase as any)
+        .from('notifications')
         .update({ is_read: true })
         .eq('is_read', false);
 
